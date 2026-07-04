@@ -1,230 +1,199 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ví Voucher Cá Nhân</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
-    <style>
-        body { background-color: #f3f4f6; }
-        .mobile-container {
-            max-width: 480px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            min-height: 100vh;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            position: relative;
-            overflow-x: hidden;
+<script type="module">
+    // 1. NHÚNG THƯ VIỆN FIREBASE (Phiên bản Modular v10)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // 2. ĐIỀN FIREBASE CONFIG CỦA BẠN VÀO ĐÂY
+    const firebaseConfig = {
+  apiKey: "AIzaSyD7Eup9NymCmiSL8156zBOwoH6Q8ZVOGq0",
+  authDomain: "vi-voucher-app.firebaseapp.com",
+  projectId: "vi-voucher-app",
+  storageBucket: "vi-voucher-app.firebasestorage.app",
+  messagingSenderId: "897386519118",
+  appId: "1:897386519118:web:84110f2d328e573e41811f",
+  measurementId: "G-3NYRHQFCS8"
+    };
+
+    // Khởi tạo Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Biến toàn cục
+    let vouchers = [];
+    let currentVoucherId = null;
+    let currentUser = null;
+    const screens = ['screen-login', 'screen-list', 'screen-add', 'screen-detail'];
+
+    // --- SỬA LẠI GIAO DIỆN ĐĂNG NHẬP ---
+    // Đổi input type="password" thành Email & Thêm input Password
+    document.getElementById('input-pin').outerHTML = `
+        <input type="email" id="input-email" placeholder="Email" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-4 text-center">
+        <input type="password" id="input-pass" placeholder="Mật khẩu (từ 6 ký tự)" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-6 text-center">
+    `;
+    document.getElementById('login-title').innerText = "Đăng Nhập / Đăng Ký";
+    document.getElementById('login-desc').innerText = "Nếu email chưa có hệ thống sẽ tự đăng ký.";
+    // Thêm nút Đăng xuất vào Header
+    document.getElementById('header-title').outerHTML += `<button id="btn-logout" class="text-xs bg-red-600 px-2 py-1 rounded">Đăng xuất</button>`;
+
+
+    // 3. XỬ LÝ ĐĂNG NHẬP / ĐĂNG KÝ
+    window.handleLogin = async function() {
+        const email = document.getElementById('input-email').value;
+        const pass = document.getElementById('input-pass').value;
+        const errorEl = document.getElementById('login-error');
+        
+        if (!email || pass.length < 6) {
+            errorEl.innerText = "Email không hợp lệ hoặc pass < 6 ký tự";
+            errorEl.classList.remove('hidden'); return;
         }
-        /* Ẩn thanh cuộn cho đẹp */
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
-    </style>
-</head>
-<body>
 
-<div class="mobile-container flex flex-col">
-    <div class="bg-gray-900 text-white p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
-        <h1 class="text-xl font-bold" id="header-title">Ví Voucher</h1>
-        <button id="btn-back" class="hidden text-sm bg-gray-700 px-3 py-1 rounded">Quay lại</button>
-    </div>
+        try {
+            // Thử đăng nhập trước
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (error) {
+            // Nếu lỗi do chưa có tài khoản -> Tự động đăng ký
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                try {
+                    await createUserWithEmailAndPassword(auth, email, pass);
+                } catch (regError) {
+                    errorEl.innerText = regError.message;
+                    errorEl.classList.remove('hidden');
+                }
+            } else {
+                errorEl.innerText = "Sai mật khẩu hoặc lỗi mạng!";
+                errorEl.classList.remove('hidden');
+            }
+        }
+    };
 
-    <div id="screen-list" class="flex-1 p-4 overflow-y-auto pb-24">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="font-semibold text-gray-700">Mã của bạn</h2>
-            <select id="filter-category" class="text-sm border rounded p-1" onchange="renderVouchers()">
-                <option value="all">Tất cả</option>
-                <option value="Katinat">Katinat</option>
-                <option value="Khác">Khác</option>
-            </select>
-        </div>
-        <div id="voucher-list" class="space-y-3">
-            </div>
+    // Theo dõi trạng thái đăng nhập
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('header-bar').classList.remove('hidden');
+            loadDataFromFirebase();
+            showScreen('screen-list');
+        } else {
+            currentUser = null;
+            document.getElementById('header-bar').classList.add('hidden');
+            showScreen('screen-login');
+        }
+    });
 
-        <button onclick="showScreen('screen-add')" class="fixed bottom-6 right-6 md:right-[calc(50%-210px)] bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg text-3xl flex items-center justify-center hover:bg-blue-700 transition">+</button>
-    </div>
+    document.getElementById('btn-logout').onclick = () => signOut(auth);
 
-    <div id="screen-add" class="hidden flex-1 p-4 bg-gray-50">
-        <h2 class="font-bold text-lg mb-4">Thêm Voucher Mới</h2>
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">Mã Voucher (Nhập hoặc Scan)</label>
-                <div class="flex">
-                    <input type="text" id="input-code" placeholder="VD: KATINAT12345" class="flex-1 border rounded-l p-2 w-full uppercase">
-                    <button class="bg-gray-200 border border-l-0 rounded-r px-3 text-2xl" onclick="alert('Tính năng bật Camera để scan QR/Mã vạch sẽ được tích hợp tại đây.')">📷</button>
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">Phân loại</label>
-                <select id="input-category" class="w-full border rounded p-2">
-                    <option value="Katinat">Katinat</option>
-                    <option value="Shopee">Shopee</option>
-                    <option value="CGV">CGV</option>
-                    <option value="Khác">Khác</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">Ngày hết hạn</label>
-                <input type="date" id="input-expiry" class="w-full border rounded p-2">
-            </div>
-            <button onclick="addVoucher()" class="w-full bg-gray-900 text-white p-3 rounded font-bold mt-4">Lưu Voucher</button>
-        </div>
-    </div>
+    // 4. LÀM VIỆC VỚI DATABASE FIREBASE
+    async function loadDataFromFirebase() {
+        if (!currentUser) return;
+        vouchers = []; // Xóa data cũ
+        const querySnapshot = await getDocs(collection(db, `users/${currentUser.uid}/vouchers`));
+        querySnapshot.forEach((doc) => {
+            vouchers.push({ id: doc.id, ...doc.data() });
+        });
+        renderVouchers();
+    }
 
-    <div id="screen-detail" class="hidden flex-1 p-0 bg-white">
-        <div class="bg-gray-50 p-6 flex flex-col items-center border-b">
-            <span id="detail-category" class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2"></span>
-            
-            <div id="qrcode" class="mb-4 bg-white p-2 rounded shadow-sm"></div>
-            
-            <svg id="barcode" class="mb-2 max-w-full"></svg>
-            
-            <p id="detail-code" class="text-2xl font-mono font-bold tracking-widest text-gray-800"></p>
-            <p id="detail-expiry" class="text-sm text-red-500 mt-2 font-medium"></p>
-        </div>
+    window.addVoucher = async function() {
+        const code = document.getElementById('input-code').value.toUpperCase();
+        const category = document.getElementById('input-category').value;
+        const expiry = document.getElementById('input-expiry').value;
 
-        <div id="katinat-terms" class="hidden p-4 text-sm text-gray-700 leading-relaxed">
-            <h3 class="font-bold text-base mb-2">Cách sử dụng</h3>
-            <p class="mb-4">Khách hàng đổi điểm để nhận voucher trên App và xuất trình cho nhân viên thu ngân trước khi thanh toán để được áp dụng.</p>
+        if (!code || !expiry) { alert("Vui lòng nhập đủ thông tin!"); return; }
 
-            <h3 class="font-bold text-base mb-2">Điều kiện áp dụng</h3>
-            <ul class="list-disc pl-5 space-y-1">
-                <li>Voucher có hạn sử dụng 14 ngày kể từ ngày khách hàng nhận voucher hoặc đến thời hạn quy định tùy điều kiện nào đến trước.</li>
-                <li>Voucher áp dụng toàn hệ thống KATINAT Coffee & Tea House (ngoại trừ KATINAT Takashimaya và Phó Đức Chính).</li>
-                <li>Vui lòng xuất trình Voucher khi gọi món. Khách hàng vui lòng không sử dụng bản sao của Voucher dưới mọi hình thức (bản Photo, hình ảnh, ảnh chụp màn hình, bản scan,...).</li>
-                <li>Voucher không áp dụng vào ngày Lễ, Tết và các ngày 24 Tháng 12, 25 Tháng 12.</li>
-                <li>Mỗi voucher chỉ được sử dụng 01 lần và 01 hoá đơn.</li>
-                <li>Không áp dụng cộng gộp Voucher trên cùng 01 đơn hàng.</li>
-                <li>Voucher không có giá trị quy đổi thành tiền mặt, không hoàn lại tiền thừa.</li>
-                <li>Voucher không áp dụng với các chương trình ưu đãi khác.</li>
-                <li>Voucher đối với sản phẩm ngang giá hoặc thấp hơn khách hàng có thể đổi ngang, không mất thêm chi phí.</li>
-                <li>Đối với sản phẩm hơn giá, khách hàng có thể lựa chọn bù thêm giá trị chênh lệch.</li>
-                <li>Khách hàng có trách nhiệm bảo mật thông tin voucher. Cửa hàng có quyền từ chối khách hàng sử dụng voucher nếu không thỏa mãn các điều kiện trên hoặc có dấu hiệu gian lận.</li>
-            </ul>
+        const newVoucher = { code, category, expiry, status: 'active', createdAt: Date.now() };
+        
+        // Lưu lên Firebase
+        const docRef = await addDoc(collection(db, `users/${currentUser.uid}/vouchers`), newVoucher);
+        
+        // Cập nhật giao diện
+        vouchers.push({ id: docRef.id, ...newVoucher });
+        document.getElementById('input-code').value = '';
+        document.getElementById('input-expiry').value = '';
+        showScreen('screen-list');
+    };
 
-            <h3 class="font-bold text-base mb-2 mt-4">Liên hệ hỗ trợ</h3>
-            <p>Từ niềm đam mê khám phá hương vị ở những vùng đất mới, những nghệ nhân KATINAT không ngừng theo đuổi sứ mệnh mang đến phong vị mới...</p>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Data mẫu ban đầu (Có sẵn 1 mã Katinat để test)
-    let vouchers = [
-        { id: Date.now(), code: 'KATINAT-DEMO-8899', category: 'Katinat', expiry: '2026-11-16' }
-    ];
-
-    const screens = ['screen-list', 'screen-add', 'screen-detail'];
-
-    // Điều hướng giữa các màn hình
-    function showScreen(screenId) {
+    // 5. CÁC HÀM UI CŨ (Giữ nguyên nhưng bọc vào window để HTML gọi được)
+    window.showScreen = function(screenId) {
         screens.forEach(id => document.getElementById(id).classList.add('hidden'));
         document.getElementById(screenId).classList.remove('hidden');
-        
         const btnBack = document.getElementById('btn-back');
         if (screenId === 'screen-list') {
             btnBack.classList.add('hidden');
             document.getElementById('header-title').innerText = 'Ví Voucher';
             renderVouchers();
-        } else {
+        } else if (screenId !== 'screen-login') {
             btnBack.classList.remove('hidden');
             btnBack.onclick = () => showScreen('screen-list');
             document.getElementById('header-title').innerText = screenId === 'screen-add' ? 'Thêm mới' : 'Chi tiết mã';
         }
-    }
+    };
 
-    // Hiển thị danh sách
-    function renderVouchers() {
+    window.renderVouchers = function() {
         const listEl = document.getElementById('voucher-list');
-        const filter = document.getElementById('filter-category').value;
+        const filter = document.getElementById('filter-category') ? document.getElementById('filter-category').value : 'all';
         listEl.innerHTML = '';
-
         const filtered = filter === 'all' ? vouchers : vouchers.filter(v => v.category === filter);
 
         if (filtered.length === 0) {
-            listEl.innerHTML = '<p class="text-center text-gray-500 mt-10">Không có voucher nào.</p>';
-            return;
+            listEl.innerHTML = '<p class="text-center text-gray-500 mt-10">Không có voucher nào.</p>'; return;
         }
 
-        filtered.forEach(v => {
-            // Tính toán sắp hết hạn (Demo)
-            const isExpiringSoon = new Date(v.expiry) < new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000);
-            
+        // Sắp xếp theo ngày tạo mới nhất
+        [...filtered].sort((a,b) => b.createdAt - a.createdAt).forEach(v => {
+            const isUsed = v.status === 'used';
             const div = document.createElement('div');
-            div.className = 'bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer active:bg-gray-50';
-            div.onclick = () => showDetail(v);
+            div.className = `p-4 rounded-lg shadow-sm border flex justify-between items-center cursor-pointer ${isUsed ? 'bg-gray-100 opacity-60' : 'bg-white active:bg-gray-50'}`;
+            div.onclick = () => window.showDetail(v);
             div.innerHTML = `
                 <div>
-                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase">${v.category}</span>
-                    <p class="font-mono font-bold text-gray-800 mt-2">${v.code}</p>
-                    <p class="text-xs text-gray-500 mt-1 ${isExpiringSoon ? 'text-red-500 font-semibold' : ''}">HSD: ${v.expiry}</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase">${v.category}</span>
+                        ${isUsed ? '<span class="text-xs font-bold text-red-500 border border-red-500 px-1 rounded">ĐÃ DÙNG</span>' : ''}
+                    </div>
+                    <p class="font-mono font-bold ${isUsed ? 'text-gray-500 line-through' : 'text-gray-800'} mt-2">${v.code}</p>
+                    <p class="text-xs text-gray-500 mt-1">HSD: ${v.expiry}</p>
                 </div>
-                <div class="text-gray-400">❯</div>
             `;
             listEl.appendChild(div);
         });
-    }
+    };
 
-    // Thêm Voucher mới
-    function addVoucher() {
-        const code = document.getElementById('input-code').value.toUpperCase();
-        const category = document.getElementById('input-category').value;
-        const expiry = document.getElementById('input-expiry').value;
-
-        if (!code || !expiry) {
-            alert("Vui lòng nhập mã và ngày hết hạn!");
-            return;
-        }
-
-        vouchers.push({ id: Date.now(), code, category, expiry });
-        
-        // Reset form
-        document.getElementById('input-code').value = '';
-        document.getElementById('input-expiry').value = '';
-        
-        showScreen('screen-list');
-    }
-
-    // Hiển thị Chi tiết để Sử dụng (Quét mã)
-    function showDetail(voucher) {
+    window.showDetail = function(voucher) {
+        currentVoucherId = voucher.id;
         showScreen('screen-detail');
-        
         document.getElementById('detail-category').innerText = voucher.category;
         document.getElementById('detail-code').innerText = voucher.code;
         document.getElementById('detail-expiry').innerText = 'HSD: ' + voucher.expiry;
-
-        // Xóa QR code cũ và tạo mới
+        
         document.getElementById('qrcode').innerHTML = '';
-        new QRCode(document.getElementById('qrcode'), {
-            text: voucher.code,
-            width: 150,
-            height: 150,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-        });
-
-        // Tạo Barcode mới
-        JsBarcode("#barcode", voucher.code, {
-            format: "CODE128",
-            width: 2,
-            height: 60,
-            displayValue: false // Đã hiển thị text ở dưới rồi
-        });
-
-        // Logic Katinat: Kiểm tra và hiện điều kiện từ hình ảnh
-        const katinatTerms = document.getElementById('katinat-terms');
-        if (voucher.category === 'Katinat') {
-            katinatTerms.classList.remove('hidden');
+        document.getElementById('barcode').innerHTML = '';
+        
+        const btnMarkUsed = document.getElementById('btn-mark-used');
+        const stampUsed = document.getElementById('stamp-used');
+        
+        if (voucher.status === 'used') {
+            stampUsed.classList.remove('hidden'); btnMarkUsed.classList.add('hidden');
+            document.getElementById('qrcode').classList.add('opacity-30');
         } else {
-            katinatTerms.classList.add('hidden');
+            stampUsed.classList.add('hidden'); btnMarkUsed.classList.remove('hidden');
+            document.getElementById('qrcode').classList.remove('opacity-30');
+            new QRCode(document.getElementById('qrcode'), { text: voucher.code, width: 150, height: 150 });
+            JsBarcode("#barcode", voucher.code, { format: "CODE128", width: 2, height: 60, displayValue: false });
         }
-    }
 
-    // Khởi tạo lần đầu
-    renderVouchers();
+        // Sự kiện cập nhật trạng thái lên Database
+        btnMarkUsed.onclick = async function() {
+            if(confirm("Bạn có chắc chắn đã sử dụng mã này?")) {
+                const voucherRef = doc(db, `users/${currentUser.uid}/vouchers`, currentVoucherId);
+                await updateDoc(voucherRef, { status: 'used' }); // Cập nhật Firebase
+                
+                const index = vouchers.findIndex(v => v.id === currentVoucherId);
+                if (index !== -1) vouchers[index].status = 'used'; // Cập nhật RAM
+                window.showDetail(vouchers[index]);
+            }
+        };
+        document.getElementById('katinat-terms').classList.toggle('hidden', voucher.category !== 'Katinat');
+    };
 </script>
-
-</body>
-</html>
