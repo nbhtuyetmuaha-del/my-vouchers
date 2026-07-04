@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <style>
         body { background-color: #f3f4f6; }
         .mobile-container {
@@ -19,6 +21,8 @@
     </style>
 </head>
 <body>
+
+<div id="qr-reader-dummy" style="display: none;"></div>
 
 <div class="mobile-container flex flex-col">
     <div id="header-bar" class="hidden bg-gray-900 text-white p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
@@ -69,8 +73,16 @@
         <div class="space-y-4">
             <div>
                 <label class="block text-sm text-gray-600 mb-1">Mã Voucher</label>
-                <input type="text" id="input-code" placeholder="VD: KATINAT123" class="flex-1 border rounded p-2 w-full uppercase">
+                <div class="flex relative">
+                    <input type="text" id="input-code" placeholder="VD: KATINAT123" class="flex-1 border rounded p-2 w-full uppercase pr-12">
+                    <button type="button" onclick="document.getElementById('upload-qr').click()" class="absolute right-0 top-0 h-full px-3 text-gray-600 bg-gray-200 hover:bg-gray-300 border border-l-0 rounded-r transition" title="Tải ảnh lên hoặc chụp mã QR">
+                        📷
+                    </button>
+                </div>
+                <input type="file" id="upload-qr" accept="image/*" capture="environment" class="hidden" onchange="scanImage(event)">
+                <p id="scan-status" class="text-xs mt-1 hidden"></p>
             </div>
+            
             <div>
                 <label class="block text-sm text-gray-600 mb-1">Phân loại</label>
                 <select id="input-category" class="w-full border rounded p-2">
@@ -135,6 +147,37 @@ const firebaseConfig = {
     let idleTimer = null;
     const screens = ['screen-login', 'screen-list', 'screen-add', 'screen-detail'];
 
+    // --- TÍNH NĂNG QUÉT MÃ QR/MÃ VẠCH TỪ ẢNH ---
+    window.scanImage = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const statusEl = document.getElementById('scan-status');
+        statusEl.className = "text-xs mt-1 text-blue-600 font-medium";
+        statusEl.innerText = "⏳ Đang phân tích ảnh...";
+        statusEl.classList.remove('hidden');
+
+        // Khởi tạo engine đọc mã QR/BarCode
+        const html5QrCode = new Html5Qrcode("qr-reader-dummy");
+
+        html5QrCode.scanFile(file, true)
+        .then(decodedText => {
+            document.getElementById('input-code').value = decodedText.toUpperCase();
+            statusEl.className = "text-xs mt-1 text-green-600 font-bold";
+            statusEl.innerText = "✅ Quét thành công!";
+            
+            // Ẩn thông báo sau 3 giây
+            setTimeout(() => statusEl.classList.add('hidden'), 3000);
+        })
+        .catch(err => {
+            statusEl.className = "text-xs mt-1 text-red-500 font-medium";
+            statusEl.innerText = "❌ Không tìm thấy mã hợp lệ trong ảnh.";
+        });
+        
+        // Reset input file để có thể chọn lại ảnh cũ nếu cần
+        event.target.value = ''; 
+    };
+
     // TỰ ĐỘNG ĐĂNG XUẤT SAU 6 GIỜ
     const IDLE_TIMEOUT_MS = 6 * 60 * 60 * 1000;
     function resetIdleTimer() {
@@ -165,7 +208,7 @@ const firebaseConfig = {
         signOut(auth);
     };
 
-    // XỬ LÝ ĐĂNG NHẬP (ĐÃ KHÓA ĐĂNG KÝ)
+    // XỬ LÝ ĐĂNG NHẬP
     window.handleLogin = async function() {
         const email = document.getElementById('input-email').value;
         const pass = document.getElementById('input-pass').value;
@@ -177,10 +220,9 @@ const firebaseConfig = {
         }
 
         try {
-            // Chỉ thực hiện đăng nhập, nếu sai hoặc tài khoản không tồn tại sẽ báo lỗi ngay
             await signInWithEmailAndPassword(auth, email, pass);
         } catch (error) {
-            errorEl.innerText = "Tài khoản hoặc Mật khẩu không chính xác, hoặc bạn không có quyền truy cập web này.";
+            errorEl.innerText = "Tài khoản hoặc Mật khẩu không chính xác.";
             errorEl.classList.remove('hidden');
         }
     };
