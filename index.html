@@ -173,7 +173,6 @@
 </div>
 
 <script>
-    // 🔴 CHỈNH SỬA ĐÚNG LINK BACKEND RENDER CỦA BẠN 🔴
     const API_URL = "https://voucher-backend-nqg2.onrender.com"; 
     const ADMIN_EMAIL = "admin@admin.com";
 
@@ -215,8 +214,15 @@
             loadDataFromBackend();
         } else {
             btnBack.classList.remove('hidden'); btnBack.onclick = () => showScreen('screen-list');
-            if (screenId === 'screen-detail') document.getElementById('header-title').innerText = 'Sử dụng mã';
-            else if (screenId === 'screen-admin') document.getElementById('header-title').innerText = 'Admin Dashboard';
+            if (screenId === 'screen-detail') {
+                document.getElementById('header-title').innerText = 'Sử dụng mã';
+            }
+            else if (screenId === 'screen-admin') {
+                document.getElementById('header-title').innerText = 'Admin Dashboard';
+                // VÁ LỖI: Tự động tải lại dữ liệu khi mở màn hình Admin
+                loadUsersAdmin();
+                loadAllVouchersAdmin();
+            }
         }
     };
 
@@ -233,11 +239,13 @@
             document.getElementById('admin-subtab-vouchers').className = "flex-1 py-2 text-center text-gray-600";
             document.getElementById('admin-section-users').classList.remove('hidden');
             document.getElementById('admin-section-vouchers').classList.add('hidden');
+            loadUsersAdmin(); // VÁ LỖI: Tải lại khi chuyển tab
         } else {
             document.getElementById('admin-subtab-users').className = "flex-1 py-2 text-center text-gray-600";
             document.getElementById('admin-subtab-vouchers').className = "flex-1 py-2 text-center bg-white rounded shadow-sm font-bold text-blue-600";
             document.getElementById('admin-section-users').classList.add('hidden');
             document.getElementById('admin-section-vouchers').classList.remove('hidden');
+            loadAllVouchersAdmin(); // VÁ LỖI: Tải lại khi chuyển tab
         }
     }
 
@@ -305,7 +313,6 @@
         if (filtered.length === 0) { listEl.innerHTML = '<p class="text-center text-gray-400 mt-10 text-xs">Không có mã giảm giá.</p>'; return; }
 
         filtered.forEach(v => {
-            // Định dạng hiển thị: 3 ký tự đầu và 3 ký tự cuối
             let maskedCode = v.code;
             if (v.code.length > 6) {
                 maskedCode = v.code.substring(0, 3) + "..." + v.code.substring(v.code.length - 3);
@@ -327,13 +334,11 @@
     };
 
     window.handleVoucherClick = async function(voucher) {
-        // Nếu mã đã dùng, cho phép xem trực tiếp luôn
         if (voucher.status === 'used') {
             window.showDetail(voucher);
             return;
         }
 
-        // Xác nhận trước khi sử dụng
         if (confirm("⚠️ XÁC NHẬN SỬ DỤNG MÃ?\n\nSau khi bấm xác nhận, hệ thống sẽ mở mã và tự động cập nhật trạng thái ĐÃ SỬ DỤNG. Bạn chỉ thực hiện thao tác này khi đứng trước nhân viên thu ngân.")) {
             try {
                 const res = await fetch(`${API_URL}/api/vouchers/${voucher._id}/use-instantly`, { method: 'PUT' });
@@ -374,6 +379,11 @@
             listEl.innerHTML = '';
             selectEl.innerHTML = '<option value="">Lưu trong kho chung (Chưa cấp)</option>';
             
+            if(allUsersCache.length === 0) {
+                listEl.innerHTML = '<p class="text-xs text-gray-500">Chưa có khách hàng nào.</p>';
+                return;
+            }
+
             allUsersCache.forEach(u => {
                 selectEl.innerHTML += `<option value="${u._id}">${u.userCode} (${u.email})</option>`;
                 listEl.innerHTML += `
@@ -484,7 +494,7 @@
                         <button onclick="deleteVoucherAdmin('${v._id}')" class="text-red-500 font-bold bg-white border px-2 py-0.5 rounded shadow-sm">Xóa</button>
                     </div>
                     <div class="flex justify-between text-gray-500 mt-1">
-                        <span>Sở hữu: <b class="text-gray-700">${v.userEmail}</b></span>
+                        <span>Sở hữu: <b class="text-gray-700">${v.userEmail || 'Lưu kho chung'}</b></span>
                         <span>Trạng thái: <b class="${v.status === 'active' ? 'text-green-600' : 'text-red-500'}">${v.status}</b></span>
                     </div>
                     ${v.userId ? '' : `
