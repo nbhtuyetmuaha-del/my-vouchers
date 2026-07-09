@@ -5,41 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ví Voucher</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
-        .security-blur { position: fixed; inset: 0; z-index: 9999; background: white; display: none; align-items: center; justify-content: center; }
-    </style>
 </head>
 <body class="bg-slate-50">
-
-    <div id="security-blur" class="security-blur">
-        <p class="font-bold text-slate-800 text-xl">🔒 Ứng dụng đã khóa</p>
-    </div>
-
-    <div class="max-w-[480px] mx-auto min-h-screen bg-white shadow-2xl overflow-hidden relative">
-        
-        <div id="screen-login" class="p-8 h-screen flex flex-col justify-center bg-slate-900 text-white">
-            <h2 class="text-3xl font-bold mb-8 text-center">Đăng nhập</h2>
-            <input type="email" id="input-email" placeholder="Email" class="w-full p-4 mb-4 rounded-2xl bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none">
-            <input type="password" id="input-pass" placeholder="Mật khẩu" class="w-full p-4 mb-8 rounded-2xl bg-slate-800 border border-slate-700 focus:border-blue-500 outline-none">
-            <button onclick="handleLogin()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold hover:bg-blue-700 transition">Đăng nhập</button>
-        </div>
-
-        <div id="screen-list" class="hidden p-6">
-            <h1 class="text-2xl font-bold mb-6">Voucher của bạn</h1>
-            <div id="voucher-list" class="space-y-4"></div>
+    <div class="max-w-[480px] mx-auto min-h-screen bg-white shadow-xl p-6 flex flex-col justify-center">
+        <div id="screen-login">
+            <h2 class="text-2xl font-bold mb-6 text-center">Đăng nhập Admin</h2>
+            <input type="email" id="input-email" placeholder="Email" class="w-full p-4 mb-4 border rounded-xl">
+            <input type="password" id="input-pass" placeholder="Mật khẩu" class="w-full p-4 mb-6 border rounded-xl">
+            <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold">Đăng nhập</button>
         </div>
     </div>
 
 <script>
-    // Xử lý bảo mật: Mờ màn hình khi thoát app
-    document.addEventListener("visibilitychange", () => {
-        document.getElementById('security-blur').style.display = document.hidden ? 'flex' : 'none';
-    });
-
-    // Hàm đăng nhập chuẩn
-    window.handleLogin = async function() {
+    async function handleLogin() {
         const email = document.getElementById('input-email').value;
         const password = document.getElementById('input-pass').value;
 
@@ -53,17 +31,18 @@
             const data = await response.json();
 
             if (response.ok) {
-                localStorage.setItem('token', data.token);
-                document.getElementById('screen-login').classList.add('hidden');
-                document.getElementById('screen-list').classList.remove('hidden');
+                alert("Đăng nhập thành công!");
+                console.log("Token nhận được:", data.token);
+                // Chuyển hướng hoặc ẩn login
             } else {
-                // Hiển thị lỗi chi tiết từ server
-                alert("Đăng nhập thất bại: " + data.message);
+                // Hiển thị chính xác lỗi từ server
+                alert("Lỗi: " + data.message);
             }
         } catch (err) {
-            alert("Lỗi kết nối server: " + err.message);
+            alert("Không thể kết nối tới server. Hãy kiểm tra đường truyền!");
+            console.error(err);
         }
-    };
+    }
 </script>
 </body>
 </html>
