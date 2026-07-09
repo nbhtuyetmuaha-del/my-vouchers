@@ -19,6 +19,10 @@
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: bold; }
         .tab-inactive { color: #6b7280; font-weight: 600; }
+        
+        /* Hiển thị thanh cuộn đẹp gọn cho phần điều khoản */
+        .terms-scroll::-webkit-scrollbar { width: 4px; }
+        .terms-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -71,8 +75,8 @@
         </div>
     </div>
 
-    <div id="screen-detail" class="hidden flex-1 p-0 bg-white flex flex-col">
-        <div class="bg-gray-50 p-6 flex flex-col items-center border-b flex-1 relative">
+    <div id="screen-detail" class="hidden flex-1 p-0 bg-white flex flex-col h-full">
+        <div class="bg-gray-50 p-6 flex flex-col items-center border-b relative shrink-0">
             <span id="detail-category" class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2"></span>
             <div class="absolute top-10 transform -rotate-12 border-4 border-red-500 text-red-500 font-bold text-3xl p-2 rounded uppercase opacity-80 z-20 pointer-events-none">Đã Sử Dụng</div>
             <div id="qrcode" class="mb-4 bg-white p-2 rounded shadow-sm opacity-30"></div>
@@ -80,14 +84,30 @@
             <p id="detail-code" class="text-2xl font-mono font-bold tracking-widest text-gray-800"></p>
             <p id="detail-expiry" class="text-sm text-gray-500 mt-2 font-medium"></p>
         </div>
-        <div id="katinat-terms" class="hidden p-4 text-sm text-gray-700 leading-relaxed overflow-y-auto max-h-60">
-            <h3 class="font-bold">Cách sử dụng</h3>
-            <p class="mb-2">Xuất trình cho nhân viên thu ngân trước khi thanh toán.</p>
-            <h3 class="font-bold">Điều kiện áp dụng</h3>
-            <ul class="list-disc pl-5 space-y-1 text-xs">
-                <li>Chỉ áp dụng tại hệ thống KATINAT Coffee & Tea House.</li>
-                <li>Không áp dụng đồng thời các chương trình ưu đãi khác.</li>
+        
+        <div id="katinat-terms" class="hidden p-4 text-gray-800 leading-relaxed overflow-y-auto terms-scroll flex-1">
+            <h3 class="font-bold text-[15px] mb-1">Cách sử dụng</h3>
+            <p class="mb-3 text-[13px] text-justify">Khách hàng đổi điểm để nhận voucher trên App và xuất trình cho nhân viên thu ngân trước khi thanh toán để được áp dụng</p>
+            
+            <h3 class="font-bold text-[15px] mb-1">Điều kiện áp dụng</h3>
+            <ul class="list-disc pl-4 space-y-1.5 text-[13px] text-justify pr-2">
+                <li>Voucher có hạn sử dụng 14 ngày kể từ ngày khách hàng nhận voucher hoặc đến thời hạn được ghi tùy điều kiện nào đến trước.</li>
+                <li>Voucher áp dụng toàn hệ thống KATINAT Coffee & Tea House (ngoại trừ KATINAT Takashimaya và Phó Đức Chính).</li>
+                <li>Vui lòng xuất trình Voucher khi gọi món. Khách hàng vui lòng không sử dụng bản sao của Voucher dưới mọi hình thức (bản Photo, hình ảnh, ảnh chụp màn hình, bản scan,...).</li>
+                <li>Voucher không áp dụng vào ngày Lễ, Tết và các ngày 24 Tháng 12, 25 Tháng 12.</li>
+                <li>Mỗi voucher chỉ được sử dụng 01 lần và 01 hoá đơn.</li>
+                <li>Không áp dụng cộng gộp Voucher trên cùng 01 đơn hàng.</li>
+                <li>Voucher không có giá trị quy đổi thành tiền mặt, không hoàn lại tiền thừa.</li>
+                <li>Voucher không áp dụng với các chương trình ưu đãi khác.</li>
+                <li>Voucher đối với sản phẩm ngang giá hoặc thấp hơn khách hàng có thể đổi ngang, không mất thêm chi phí.</li>
+                <li>Đối với sản phẩm hơn giá, khách hàng có thể lựa chọn bù thêm giá trị chênh lệch để đổi và thanh toán trực tiếp cho KATINAT.</li>
+                <li>Khách hàng có trách nhiệm bảo mật thông tin voucher. Sau khi voucher được phát ra, Techcombank sẽ không chịu trách nhiệm hoàn trả voucher bị mất hoặc ở trạng thái Đã sử dụng với bất kỳ lý do gì.</li>
+                <li>Techcombank không chịu trách nhiệm đối với chất lượng của sản phẩm hoặc dịch vụ được cung cấp cũng như đối với các tranh chấp về sau (nếu có) giữa khách hàng và bên cung cấp.</li>
+                <li>Cửa hàng có quyền từ chối khách hàng sử dụng voucher nếu không thỏa mãn các điều kiện đã nêu trên đây hoặc nếu có dấu hiệu đầu cơ/gian lận.</li>
             </ul>
+
+            <h3 class="font-bold text-[15px] mb-1 mt-4">Liên hệ hỗ trợ</h3>
+            <p class="text-[13px] text-justify">Từ niềm đam mê khám phá hương vị ở những vùng đất mới, những nghệ nhân KATINAT không ngừng theo đuổi sứ mệnh mang đến phong vị mới...</p>
         </div>
     </div>
 
@@ -153,6 +173,7 @@
 </div>
 
 <script>
+    // 🔴 CHỈNH SỬA ĐÚNG LINK BACKEND RENDER CỦA BẠN 🔴
     const API_URL = "https://voucher-backend-nqg2.onrender.com"; 
     const ADMIN_EMAIL = "admin@admin.com";
 
@@ -312,8 +333,8 @@
             return;
         }
 
-        // Nếu mã chưa dùng, yêu cầu kích hoạt xác nhận chuyển sang đã dùng ngay lập tức
-        if (confirm("⚠️ XÁC NHẬN SỬ DỤNG MÃ?\n\nSau khi bấm xác nhận, hệ thống sẽ mở mã QR/Mã vạch và tự động cập nhật trạng thái ĐÃ SỬ DỤNG. Bạn chỉ thực hiện thao tác này khi đứng trước nhân viên thu ngân.")) {
+        // Xác nhận trước khi sử dụng
+        if (confirm("⚠️ XÁC NHẬN SỬ DỤNG MÃ?\n\nSau khi bấm xác nhận, hệ thống sẽ mở mã và tự động cập nhật trạng thái ĐÃ SỬ DỤNG. Bạn chỉ thực hiện thao tác này khi đứng trước nhân viên thu ngân.")) {
             try {
                 const res = await fetch(`${API_URL}/api/vouchers/${voucher._id}/use-instantly`, { method: 'PUT' });
                 const updatedVoucher = await res.json();
@@ -329,7 +350,7 @@
     window.showDetail = function(voucher) {
         showScreen('screen-detail');
         document.getElementById('detail-category').innerText = voucher.category;
-        document.getElementById('detail-code').innerText = voucher.code; // Hiển thị mã rõ ràng khi mở
+        document.getElementById('detail-code').innerText = voucher.code; 
         document.getElementById('detail-expiry').innerText = 'HSD: ' + voucher.expiry;
         
         document.getElementById('qrcode').innerHTML = ''; document.getElementById('barcode').innerHTML = '';
@@ -354,10 +375,7 @@
             selectEl.innerHTML = '<option value="">Lưu trong kho chung (Chưa cấp)</option>';
             
             allUsersCache.forEach(u => {
-                // Dropdown cấp mã
                 selectEl.innerHTML += `<option value="${u._id}">${u.userCode} (${u.email})</option>`;
-                
-                // Card quản lý thành viên
                 listEl.innerHTML += `
                     <div class="p-3 bg-gray-50 border rounded-xl flex flex-col gap-2">
                         <div class="flex justify-between items-start">
