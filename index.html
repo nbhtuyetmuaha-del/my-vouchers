@@ -65,12 +65,20 @@
             <button id="tab-active" class="flex-1 py-2 text-sm rounded-lg font-bold bg-white shadow-sm text-blue-600" onclick="switchTab('active')">Chưa dùng <span id="count-active" class="ml-1 text-xs bg-blue-100 px-2 py-0.5 rounded-full">0</span></button>
             <button id="tab-used" class="flex-1 py-2 text-sm rounded-lg font-semibold text-slate-500" onclick="switchTab('used')">Đã dùng <span id="count-used" class="ml-1 text-xs bg-slate-300 px-2 py-0.5 rounded-full text-slate-700">0</span></button>
         </div>
-        <select id="filter-category" class="w-full text-sm border-0 bg-white shadow-sm rounded-xl p-3 mb-4 outline-none font-medium text-slate-700" onchange="renderVouchers()">
-            <option value="all">Tất cả thương hiệu</option>
-            <option value="Katinat">Katinat</option>
-            <option value="Shopee">Shopee</option>
-            <option value="Khác">Khác</option>
-        </select>
+        
+        <div class="flex gap-2 mb-4">
+            <select id="filter-category" class="flex-1 text-xs border-0 bg-white shadow-sm rounded-xl p-3 outline-none font-medium text-slate-700" onchange="renderVouchers()">
+                <option value="all">Tất cả thương hiệu</option>
+                <option value="Katinat">Katinat</option>
+                <option value="Shopee">Shopee</option>
+                <option value="Khác">Khác</option>
+            </select>
+            <select id="sort-vouchers" class="flex-1 text-xs border-0 bg-white shadow-sm rounded-xl p-3 outline-none font-medium text-slate-700" onchange="renderVouchers()">
+                <option value="newest">Mới nhất</option>
+                <option value="expiry">Hạn gần nhất</option>
+            </select>
+        </div>
+
         <div id="voucher-list" class="space-y-3"></div>
     </div>
 
@@ -80,7 +88,6 @@
             <span id="detail-category" class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4"></span>
             <div id="stamp-used" class="hidden absolute top-10 transform -rotate-12 border-4 border-red-500 text-red-500 font-bold text-3xl p-2 rounded uppercase opacity-80 z-20">Đã Sử Dụng</div>
             <div id="qrcode" class="p-3 bg-white rounded-3xl shadow-xl border border-slate-100"></div>
-            <svg id="barcode" class="mt-4 max-w-full hidden"></svg>
             <div class="mt-6 text-center">
                 <p id="detail-code" class="text-3xl font-mono font-bold tracking-widest text-slate-900"></p>
                 <p id="detail-expiry" class="text-sm font-semibold text-slate-500 mt-2"></p>
@@ -89,12 +96,7 @@
         <div class="p-6 bg-slate-50 rounded-t-[32px] text-sm text-slate-600 space-y-2 h-1/3 overflow-y-auto">
             <h3 class="font-bold text-slate-800">Hướng dẫn sử dụng</h3>
             <p>Khách hàng đổi điểm để nhận voucher trên App và xuất trình cho nhân viên thu ngân trước khi thanh toán.</p>
-            <h3 class="font-bold text-slate-800 mt-4">Điều kiện áp dụng</h3>
-            <ul class="list-disc pl-4 space-y-1">
-                <li>Hạn sử dụng 14 ngày kể từ ngày nhận.</li>
-                <li>Áp dụng toàn hệ thống KATINAT Coffee & Tea House.</li>
-                <li>Mỗi voucher chỉ được sử dụng 01 lần và 01 hoá đơn.</li>
-            </ul>
+            <button onclick="showScreen('screen-list')" class="mt-6 w-full py-3 bg-slate-900 text-white rounded-xl font-bold">Quay lại</button>
         </div>
     </div>
 
@@ -114,6 +116,9 @@
             </div>
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                 <h4 class="text-sm font-bold text-slate-800 mb-3">Danh sách khách hàng</h4>
+                <div class="mb-4">
+                    <input type="text" id="admin-search-user" placeholder="🔍 Tìm mã KH hoặc email..." class="w-full bg-slate-50 border-0 p-3 rounded-xl text-sm outline-none transition" oninput="filterUsersAdmin()">
+                </div>
                 <div id="admin-user-list" class="space-y-3"></div>
             </div>
         </div>
@@ -122,18 +127,12 @@
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <h3 class="font-bold text-slate-800 text-sm">➕ Nhập mã giảm giá</h3>
                 
-                <div class="flex relative">
-
-                
                 <div class="flex relative items-center">
                     <input type="text" id="admin-v-code" placeholder="Nhập mã chữ..." class="w-full bg-slate-50 border-0 p-3 pr-12 rounded-xl text-sm uppercase font-mono outline-none">
-                    
                     <button type="button" onclick="document.getElementById('upload-qr').click()" class="absolute right-3 text-slate-400 hover:text-blue-600 text-xl transition active:scale-90" title="Quét mã">📷</button>
                 </div>
-                
                 <input type="file" id="upload-qr" accept="image/*" class="hidden" onchange="scanImage(event)">
                 <p id="scan-status" class="text-xs font-bold mt-1 hidden"></p>
-                </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <select id="admin-v-category" class="bg-slate-50 border-0 p-3 rounded-xl text-sm outline-none">
@@ -159,9 +158,14 @@
 
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="font-bold text-slate-800 mb-3 text-sm">🎟️ Danh sách kho mã</h3>
+                
                 <div class="flex gap-2 mb-4">
-                    <input type="text" id="admin-search" placeholder="Tìm kiếm..." class="flex-1 bg-slate-50 border-0 p-3 rounded-xl text-sm outline-none">
-                    <button onclick="searchAdminVouchers()" class="bg-slate-800 text-white px-5 rounded-xl font-bold text-sm">Tìm</button>
+                    <input type="text" id="admin-search" placeholder="Tìm kiếm mã..." class="flex-1 bg-slate-50 border-0 p-3 rounded-xl text-sm outline-none">
+                    <select id="admin-sort-vouchers" class="bg-slate-50 border-0 p-3 rounded-xl text-sm outline-none" onchange="searchAdminVouchers()">
+                        <option value="newest">Mới nhất</option>
+                        <option value="expiry">Hạn gần</option>
+                    </select>
+                    <button onclick="searchAdminVouchers()" class="bg-slate-800 text-white px-4 rounded-xl font-bold text-sm">Tìm</button>
                 </div>
                 
                 <div id="admin-voucher-list" class="space-y-3"></div>
@@ -186,36 +190,7 @@
     let currentTab = 'active'; 
     let currentAdminPage = 1;
     let totalAdminPages = 1;
-    // --- TÍNH NĂNG QUÉT MÃ QR / BARCODE ---
-    window.scanImage = function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        const statusEl = document.getElementById('scan-status');
-        statusEl.className = "text-xs text-blue-600 font-bold mt-1";
-        statusEl.innerText = "⏳ Đang phân tích ảnh...";
-        statusEl.classList.remove('hidden');
 
-        // Sử dụng thư viện html5-qrcode đã nhúng sẵn ở thẻ <head>
-        const html5QrCode = new Html5Qrcode("qr-reader-dummy");
-        html5QrCode.scanFile(file, true).then(decodedText => {
-            // Điền mã quét được vào ô input
-            document.getElementById('admin-v-code').value = decodedText.toUpperCase();
-            
-            statusEl.className = "text-xs text-green-600 font-bold mt-1";
-            statusEl.innerText = "✅ Quét thành công!";
-            
-            // Ẩn thông báo sau 3 giây
-            setTimeout(() => statusEl.classList.add('hidden'), 3000);
-        }).catch(err => {
-            statusEl.className = "text-xs text-red-500 font-bold mt-1";
-            statusEl.innerText = "❌ Không tìm thấy mã hợp lệ trong ảnh.";
-        });
-        
-        // Reset lại input file để có thể quét lại cùng 1 ảnh nếu cần
-        event.target.value = '';
-    };
-    // BẢO MẬT: CHỐNG CHỤP MÀN HÌNH
     document.addEventListener("visibilitychange", function() {
         const blur = document.getElementById('security-blur');
         if (document.hidden) { blur.style.display = 'flex'; } else { blur.style.display = 'none'; }
@@ -269,7 +244,28 @@
         }
     }
 
-    // --- LOGIC AUTH CÓ BỘ GIẢM XÓC LỖI ---
+    // TÍNH NĂNG CAMERA QUÉT MÃ
+    window.scanImage = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const statusEl = document.getElementById('scan-status');
+        statusEl.className = "text-xs text-blue-600 font-bold mt-1";
+        statusEl.innerText = "⏳ Đang phân tích ảnh...";
+        statusEl.classList.remove('hidden');
+
+        const html5QrCode = new Html5Qrcode("qr-reader-dummy");
+        html5QrCode.scanFile(file, true).then(decodedText => {
+            document.getElementById('admin-v-code').value = decodedText.toUpperCase();
+            statusEl.className = "text-xs text-green-600 font-bold mt-1";
+            statusEl.innerText = "✅ Quét thành công!";
+            setTimeout(() => statusEl.classList.add('hidden'), 3000);
+        }).catch(err => {
+            statusEl.className = "text-xs text-red-500 font-bold mt-1";
+            statusEl.innerText = "❌ Không tìm thấy mã trong ảnh.";
+        });
+        event.target.value = '';
+    };
+
     async function handleLogin() {
         const email = document.getElementById('input-email').value;
         const password = document.getElementById('input-pass').value;
@@ -283,22 +279,12 @@
             
             if (response.ok) {
                 userToken = data.token; 
-                // BỘ ĐỆM LỖI: Tạo user mặc định nếu Backend quên gửi
                 currentUser = data.user || { email: email, role: email.includes('admin') ? 'admin' : 'khach', userCode: 'N/A' };
-                
                 sessionStorage.setItem('voucher_token', data.token); 
                 sessionStorage.setItem('voucher_user', JSON.stringify(currentUser));
-                
                 setupAppHeader(); 
-                
-                if(currentUser.role === 'admin') {
-                    showScreen('screen-admin');
-                } else {
-                    showScreen('screen-list');
-                }
-            } else { 
-                alert("❌ Đăng nhập thất bại: " + data.message); 
-            }
+                if(currentUser.role === 'admin') showScreen('screen-admin'); else showScreen('screen-list');
+            } else { alert("❌ Đăng nhập thất bại: " + data.message); }
         } catch (err) { alert("Lỗi mạng: Không thể kết nối máy chủ"); }
     }
 
@@ -316,7 +302,7 @@
         else document.getElementById('btn-admin-panel').classList.add('hidden');
     }
 
-    // --- LOGIC KHÁCH HÀNG ---
+    // --- LOGIC KHÁCH HÀNG (CÓ SẮP XẾP) ---
     async function loadDataFromBackend() {
         if (!currentUser) return;
         try {
@@ -326,14 +312,36 @@
         } catch (e) { console.error(e); }
     }
 
+    // Hàm đọc ngày an toàn (Hỗ trợ YYYY-MM-DD và DD/MM/YYYY)
+    function parseDateSafely(dateStr) {
+        if (!dateStr) return 0;
+        if (dateStr.includes('/')) {
+            const parts = dateStr.split('/');
+            if (parts.length === 3) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
+        }
+        return new Date(dateStr).getTime() || 0;
+    }
+
     window.renderVouchers = function() {
         const listEl = document.getElementById('voucher-list');
         const filter = document.getElementById('filter-category').value;
+        const sortBy = document.getElementById('sort-vouchers').value;
+        
         listEl.innerHTML = '';
         document.getElementById('count-active').innerText = vouchers.filter(v => v.status === 'active').length;
         document.getElementById('count-used').innerText = vouchers.filter(v => v.status === 'used').length;
+        
         let filtered = vouchers.filter(v => v.status === currentTab);
         if(filter !== 'all') filtered = filtered.filter(v => v.category === filter);
+
+        // THỰC HIỆN SẮP XẾP
+        if (sortBy === 'expiry') {
+            // Hạn gần nhất xếp lên trên
+            filtered.sort((a, b) => parseDateSafely(a.expiry) - parseDateSafely(b.expiry));
+        } else {
+            // Mới nhất xếp lên trên
+            filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
 
         if (filtered.length === 0) { listEl.innerHTML = '<p class="text-center text-slate-400 mt-10 text-sm">Chưa có mã nào.</p>'; return; }
 
@@ -346,7 +354,7 @@
                 <div>
                     <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase">${v.category}</span>
                     <p class="font-mono font-bold text-slate-800 text-xl mt-2 tracking-wider">${maskedCode}</p>
-                    <p class="text-xs text-slate-400 mt-1">Hạn: ${v.expiry}</p>
+                    <p class="text-xs ${sortBy === 'expiry' ? 'text-red-500 font-bold' : 'text-slate-400'} mt-1">Hạn: ${v.expiry}</p>
                 </div>
                 <div class="text-slate-300">❯</div>
             `;
@@ -389,24 +397,31 @@
         try {
             const res = await fetch(`${API_URL}/api/admin/users`, { headers: { 'Authorization': `Bearer ${userToken}` }});
             allUsersCache = await res.json();
-            listEl.innerHTML = ''; selectEl.innerHTML = '<option value="">Lưu vào kho chung (Chưa cấp)</option>';
-            if(allUsersCache.length === 0) { listEl.innerHTML = '<p class="text-xs text-slate-500">Chưa có khách.</p>'; return; }
-
-            allUsersCache.forEach(u => {
-                selectEl.innerHTML += `<option value="${u._id}">${u.userCode} - ${u.email}</option>`;
-                listEl.innerHTML += `
-                    <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col gap-2">
-                        <div class="flex justify-between items-start">
-                            <div><span class="text-xs bg-slate-200 font-bold px-2 py-1 rounded">${u.userCode}</span><p class="text-sm font-bold text-slate-800 mt-2">${u.email}</p></div>
-                            <button onclick="deleteUserAdmin('${u._id}')" class="text-xs text-red-500 font-bold bg-white px-3 py-1.5 rounded-lg border shadow-sm">Xóa</button>
-                        </div>
-                        <div class="flex justify-between border-t border-slate-200 pt-3 mt-1 items-center">
-                            <span class="text-[10px] text-slate-400">Mật khẩu: Đã mã hóa</span>
-                            <button onclick="resetPasswordAdmin('${u._id}', '${u.email}')" class="text-xs text-blue-600 font-bold">🔑 Đổi Pass</button>
-                        </div>
-                    </div>`;
-            });
+            selectEl.innerHTML = '<option value="">Lưu vào kho chung (Chưa cấp)</option>';
+            allUsersCache.forEach(u => selectEl.innerHTML += `<option value="${u._id}">${u.userCode} - ${u.email}</option>`);
+            filterUsersAdmin();
         } catch(e) { listEl.innerHTML = '<p class="text-xs text-red-500">Lỗi lấy dữ liệu.</p>'; }
+    }
+
+    window.filterUsersAdmin = function() {
+        const keyword = document.getElementById('admin-search-user').value.toLowerCase().trim();
+        const listEl = document.getElementById('admin-user-list');
+        listEl.innerHTML = '';
+        const filteredUsers = allUsersCache.filter(u => (u.email && u.email.toLowerCase().includes(keyword)) || (u.userCode && u.userCode.toLowerCase().includes(keyword)));
+        if(filteredUsers.length === 0) { listEl.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Không tìm thấy khách hàng nào.</p>'; return; }
+        filteredUsers.forEach(u => {
+            listEl.innerHTML += `
+                <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col gap-2">
+                    <div class="flex justify-between items-start">
+                        <div><span class="text-xs bg-slate-200 font-bold px-2 py-1 rounded">${u.userCode}</span><p class="text-sm font-bold text-slate-800 mt-2">${u.email}</p></div>
+                        <button onclick="deleteUserAdmin('${u._id}')" class="text-xs text-red-500 font-bold bg-white px-3 py-1.5 rounded-lg border shadow-sm">Xóa</button>
+                    </div>
+                    <div class="flex justify-between border-t border-slate-200 pt-3 mt-1 items-center">
+                        <span class="text-[10px] text-slate-400">Mật khẩu: Đã mã hóa</span>
+                        <button onclick="resetPasswordAdmin('${u._id}', '${u.email}')" class="text-xs text-blue-600 font-bold">🔑 Đổi Pass</button>
+                    </div>
+                </div>`;
+        });
     }
 
     window.resetPasswordAdmin = async function(id, email) {
@@ -426,18 +441,14 @@
             const data = await res.json();
             if(!res.ok) return alert(data.message);
             document.getElementById('admin-new-user-email').value = ''; loadUsersAdmin();
-            alert(`✅ Tạo thành công!\nEmail: ${data.email}\nMật khẩu: ${data.password}\nHãy copy lại mật khẩu này!`);
+            alert(`✅ Tạo thành công!\nEmail: ${data.email}\nMật khẩu: ${data.password}`);
         } catch (e) {}
     };
 
     window.deleteUserAdmin = async function(id) {
-        if(confirm(`Xóa vĩnh viễn tài khoản này?`)) {
-            await fetch(`${API_URL}/api/admin/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${userToken}` }}); 
-            loadUsersAdmin(); loadAllVouchersAdmin();
-        }
+        if(confirm(`Xóa vĩnh viễn tài khoản này?`)) { await fetch(`${API_URL}/api/admin/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${userToken}` }}); loadUsersAdmin(); loadAllVouchersAdmin(); }
     };
 
-    // VOUCHER ADMIN
     window.addVoucherAdmin = async function() {
         const code = document.getElementById('admin-v-code').value; const category = document.getElementById('admin-v-category').value;
         const expiry = document.getElementById('admin-v-expiry').value; const userId = document.getElementById('admin-v-user-select').value;
@@ -477,10 +488,12 @@
     window.changeAdminPage = function(dir) { currentAdminPage += dir; loadAllVouchersAdmin(); }
 
     window.loadAllVouchersAdmin = async function() {
-        const keyword = document.getElementById('admin-search').value; const listEl = document.getElementById('admin-voucher-list');
+        const keyword = document.getElementById('admin-search').value; 
+        const sortBy = document.getElementById('admin-sort-vouchers').value;
+        const listEl = document.getElementById('admin-voucher-list');
         listEl.innerHTML = '<p class="text-center text-xs text-slate-400">Đang tải...</p>';
         try {
-            const res = await fetch(`${API_URL}/api/admin/vouchers?keyword=${encodeURIComponent(keyword)}&page=${currentAdminPage}&limit=10`, { headers: { 'Authorization': `Bearer ${userToken}` } });
+            const res = await fetch(`${API_URL}/api/admin/vouchers?keyword=${encodeURIComponent(keyword)}&page=${currentAdminPage}&limit=10&sortBy=${sortBy}`, { headers: { 'Authorization': `Bearer ${userToken}` } });
             const data = await res.json(); listEl.innerHTML = '';
             if(!data.list || data.list.length === 0) { listEl.innerHTML = '<p class="text-center text-slate-500 text-xs">Kho trống.</p>'; return setupPaginationControls(0, 1, 1); }
             
