@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        body { background-color: #f3f4f6; }
+        body { background-color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
         .mobile-container {
             max-width: 480px; margin: 0 auto;
             background-color: #ffffff; min-height: 100vh;
@@ -34,12 +34,12 @@
         </div>
         <div id="user-menu-dropdown" class="hidden absolute top-14 right-4 bg-white text-gray-800 rounded-lg shadow-xl border w-56 z-20 overflow-hidden">
             <div class="p-4 border-b bg-gray-50">
-                <p class="text-xs text-gray-500 mb-1">Đang đăng nhập với:</p>
+                <p class="text-xs text-gray-500 mb-1" id="menu-user-role">Đang đăng nhập:</p>
                 <p class="text-sm font-bold truncate" id="menu-user-email">user@email.com</p>
             </div>
             <div class="p-2 flex flex-col gap-1">
-                <button id="btn-admin-panel" class="hidden w-full text-left px-4 py-2 text-blue-600 font-semibold hover:bg-blue-50 rounded transition" onclick="showScreen('screen-admin')">⚙️ Admin Dashboard</button>
-                <button id="btn-logout" class="w-full text-left px-4 py-2 text-red-600 font-semibold hover:bg-red-50 rounded transition" onclick="handleLogout()">🚪 Đăng xuất ngay</button>
+                <button id="btn-admin-panel" class="hidden w-full text-left px-4 py-2 text-blue-600 font-semibold hover:bg-blue-50 rounded transition" onclick="showScreen('screen-admin')">⚙️ Quản trị hệ thống</button>
+                <button id="btn-logout" class="w-full text-left px-4 py-2 text-red-600 font-semibold hover:bg-red-50 rounded transition" onclick="handleLogout()">🚪 Đăng xuất</button>
             </div>
         </div>
     </div>
@@ -47,11 +47,9 @@
     <div id="screen-login" class="flex-1 flex flex-col items-center justify-center p-6 bg-gray-900 text-white">
         <div class="bg-white p-6 rounded-2xl shadow-xl w-full text-gray-900 text-center relative overflow-hidden">
             <h2 class="text-2xl font-bold mb-2">Hệ Thống Voucher</h2>
-            <p class="text-sm text-gray-500 mb-6">Đăng nhập tài khoản hệ thống cấp.</p>
-            
+            <p class="text-sm text-gray-500 mb-6">Nhập tài khoản để truy cập vào hệ thống.</p>
             <input type="email" id="input-email" placeholder="Nhập Email" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-4 text-center">
             <input type="password" id="input-pass" placeholder="Mật khẩu" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-6 text-center">
-            
             <button onclick="handleLogin()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Đăng Nhập</button>
             <p id="login-error" class="text-red-500 text-sm mt-3 hidden"></p>
         </div>
@@ -71,105 +69,113 @@
             </select>
             <div id="voucher-list" class="space-y-3"></div>
         </div>
-        <button onclick="showScreen('screen-add')" class="fixed bottom-6 right-6 md:right-[calc(50%-210px)] bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg text-3xl flex items-center justify-center hover:bg-blue-700 transition z-10">+</button>
-    </div>
-
-    <div id="screen-add" class="hidden flex-1 p-4 bg-gray-50">
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">Mã Voucher</label>
-                <div class="flex relative">
-                    <input type="text" id="input-code" placeholder="VD: KATINAT123" class="flex-1 border rounded p-2 w-full uppercase pr-12">
-                    <button type="button" onclick="document.getElementById('upload-qr').click()" class="absolute right-0 top-0 h-full px-3 text-gray-600 bg-gray-200 hover:bg-gray-300 border border-l-0 rounded-r transition">📷</button>
-                </div>
-                <input type="file" id="upload-qr" accept="image/*" class="hidden" onchange="scanImage(event)">
-                <p id="scan-status" class="text-xs mt-1 hidden"></p>
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">Phân loại</label>
-                <select id="input-category" class="w-full border rounded p-2">
-                    <option value="Katinat">Katinat</option>
-                    <option value="Shopee">Shopee</option>
-                    <option value="Khác">Khác</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">Ngày hết hạn</label>
-                <input type="date" id="input-expiry" class="w-full border rounded p-2">
-            </div>
-            <button onclick="addVoucher()" class="w-full bg-gray-900 text-white p-3 rounded font-bold mt-4">Lưu Voucher</button>
-        </div>
     </div>
 
     <div id="screen-detail" class="hidden flex-1 p-0 bg-white flex flex-col">
         <div class="bg-gray-50 p-6 flex flex-col items-center border-b flex-1 relative">
             <span id="detail-category" class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2"></span>
-            <div id="stamp-used" class="hidden absolute top-10 transform -rotate-12 border-4 border-red-500 text-red-500 font-bold text-3xl p-2 rounded uppercase opacity-80 z-20 pointer-events-none">Đã Sử Dụng</div>
-            <div id="qrcode" class="mb-4 bg-white p-2 rounded shadow-sm"></div>
+            <div class="absolute top-10 transform -rotate-12 border-4 border-red-500 text-red-500 font-bold text-3xl p-2 rounded uppercase opacity-80 z-20 pointer-events-none">Đã Sử Dụng</div>
+            <div id="qrcode" class="mb-4 bg-white p-2 rounded shadow-sm opacity-30"></div>
             <svg id="barcode" class="mb-2 max-w-full"></svg>
             <p id="detail-code" class="text-2xl font-mono font-bold tracking-widest text-gray-800"></p>
             <p id="detail-expiry" class="text-sm text-gray-500 mt-2 font-medium"></p>
-            <button id="btn-mark-used" class="mt-6 bg-red-100 text-red-600 border border-red-300 px-4 py-2 rounded font-bold w-full active:bg-red-200">Đánh dấu đã sử dụng</button>
+        </div>
+        <div id="katinat-terms" class="hidden p-4 text-sm text-gray-700 leading-relaxed overflow-y-auto max-h-60">
+            <h3 class="font-bold">Cách sử dụng</h3>
+            <p class="mb-2">Xuất trình cho nhân viên thu ngân trước khi thanh toán.</p>
+            <h3 class="font-bold">Điều kiện áp dụng</h3>
+            <ul class="list-disc pl-5 space-y-1 text-xs">
+                <li>Chỉ áp dụng tại hệ thống KATINAT Coffee & Tea House.</li>
+                <li>Không áp dụng đồng thời các chương trình ưu đãi khác.</li>
+            </ul>
         </div>
     </div>
 
-    <div id="screen-admin" class="hidden flex-1 p-4 bg-gray-100 overflow-y-auto">
-        <div class="bg-white p-4 rounded shadow-sm mb-6 border">
-            <h3 class="font-bold text-lg mb-2 text-blue-700">🔒 Quản Lý Thành Viên</h3>
-            <p class="text-xs text-gray-500 mb-3">Nhập email, máy chủ Node.js sẽ tự sinh Password ngẫu nhiên mà không lo văng tài khoản Admin.</p>
-            
-            <div class="flex gap-2 mb-4">
-                <input type="email" id="admin-new-user-email" placeholder="Nhập email nhân viên..." class="flex-1 border p-2 rounded text-sm outline-none">
-                <button onclick="grantUserAccess()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold">Tạo User</button>
+    <div id="screen-admin" class="hidden flex-1 p-4 bg-gray-100 overflow-y-auto space-y-6 pb-24">
+        <div class="flex gap-2 p-1 bg-gray-200 rounded-lg text-sm font-medium">
+            <button id="admin-subtab-users" class="flex-1 py-2 text-center bg-white rounded shadow-sm" onclick="switchAdminSubTab('users')">👥 Thành viên</button>
+            <button id="admin-subtab-vouchers" class="flex-1 py-2 text-center text-gray-600" onclick="switchAdminSubTab('vouchers')">🎟️ Kho Voucher</button>
+        </div>
+
+        <div id="admin-section-users" class="space-y-4">
+            <div class="bg-white p-4 rounded-xl shadow-sm border">
+                <h3 class="font-bold text-sm text-gray-700 mb-3">➕ Thêm Tài Khoản Khách Mới</h3>
+                <div class="flex gap-2">
+                    <input type="email" id="admin-new-user-email" placeholder="Nhập email khách hàng..." class="flex-1 border p-2 rounded-lg text-sm outline-none">
+                    <button onclick="grantUserAccess()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Tạo</button>
+                </div>
             </div>
-            
-            <div class="border-t pt-2 mt-2">
-                <h4 class="text-sm font-bold text-gray-700 mb-2">Danh sách thành viên nội bộ:</h4>
-                <div id="admin-user-list" class="space-y-2"></div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border">
+                <h4 class="text-sm font-bold text-gray-700 mb-3">Danh sách khách hàng nội bộ</h4>
+                <div id="admin-user-list" class="space-y-3"></div>
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded shadow-sm border">
-            <h3 class="font-bold text-lg mb-2 text-gray-800">🎟️ Quản Lý Tất Cả Mã</h3>
-            <div class="flex gap-2 mb-4 mt-2">
-                <input type="text" id="admin-search" placeholder="Tìm kiếm mã voucher..." class="flex-1 border p-2 rounded text-sm outline-none">
-                <button onclick="loadAllVouchersAdmin()" class="bg-gray-800 text-white px-3 py-2 rounded text-sm">Tìm kiếm</button>
+        <div id="admin-section-vouchers" class="hidden space-y-4">
+            <div class="bg-white p-4 rounded-xl shadow-sm border space-y-3">
+                <h3 class="font-bold text-sm text-gray-700">➕ Tạo Mã Giảm Giá Mới</h3>
+                <div class="flex relative">
+                    <input type="text" id="admin-v-code" placeholder="Nhập mã hoặc quét ảnh..." class="w-full border p-2 rounded-lg text-sm uppercase pr-10 outline-none">
+                    <button type="button" onclick="document.getElementById('upload-qr').click()" class="absolute right-0 top-0 h-full px-3 text-gray-500">📷</button>
+                </div>
+                <input type="file" id="upload-qr" accept="image/*" class="hidden" onchange="scanImage(event)">
+                <p id="scan-status" class="text-xs hidden"></p>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="admin-v-category" class="border p-2 rounded-lg text-sm outline-none bg-white">
+                        <option value="Katinat">Katinat</option>
+                        <option value="Shopee">Shopee</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                    <input type="date" id="admin-v-expiry" class="border p-2 rounded-lg text-sm outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Cấp mã thẳng cho khách hàng (Tùy chọn):</label>
+                    <select id="admin-v-user-select" class="w-full border p-2 rounded-lg text-sm outline-none bg-white">
+                        <option value="">Lưu trong kho chung (Chưa cấp)</option>
+                    </select>
+                </div>
+
+                <button onclick="addVoucherAdmin()" class="w-full bg-gray-900 text-white p-2.5 rounded-lg text-sm font-bold">Lưu Vào Hệ Thống</button>
             </div>
-            <div id="admin-voucher-list" class="space-y-2 text-sm"></div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border">
+                <h3 class="font-bold text-sm text-gray-700 mb-3">🎟️ Kho mã toàn hệ thống</h3>
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="admin-search" placeholder="Tìm kiếm ký tự mã..." class="flex-1 border p-2 rounded-lg text-sm outline-none">
+                    <button onclick="loadAllVouchersAdmin()" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm">Tìm</button>
+                </div>
+                <div id="admin-voucher-list" class="space-y-2"></div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // 🔴 ĐƯỜNG DẪN ĐẾN MÁY CHỦ BACKEND CỦA BẠN 🔴
-    const API_URL =  "https://voucher-backend-nqg2.onrender.com"; 
+    const API_URL = "https://voucher-backend-nqg2.onrender.com"; 
     const ADMIN_EMAIL = "admin@admin.com";
 
     let vouchers = [];
-    let currentVoucherId = null;
-    let currentUser = null; // Chứa { id, email } nhận từ backend
+    let allUsersCache = [];
+    let currentUser = null;
     let currentTab = 'active'; 
-    const screens = ['screen-login', 'screen-list', 'screen-add', 'screen-detail', 'screen-admin'];
 
-    // QUÉT ẢNH CAMERA
     window.scanImage = function(event) {
         const file = event.target.files[0];
         if (!file) return;
         const statusEl = document.getElementById('scan-status');
-        statusEl.className = "text-xs mt-1 text-blue-600 font-medium"; statusEl.innerText = "⏳ Đang phân tích ảnh..."; statusEl.classList.remove('hidden');
+        statusEl.className = "text-xs text-blue-600 font-medium"; statusEl.innerText = "⏳ Đang phân tích ảnh..."; statusEl.classList.remove('hidden');
 
         const html5QrCode = new Html5Qrcode("qr-reader-dummy");
         html5QrCode.scanFile(file, true).then(decodedText => {
-            document.getElementById('input-code').value = decodedText.toUpperCase();
-            statusEl.className = "text-xs mt-1 text-green-600 font-bold"; statusEl.innerText = "✅ Quét thành công!";
-            setTimeout(() => statusEl.classList.add('hidden'), 3000);
+            document.getElementById('admin-v-code').value = decodedText.toUpperCase();
+            statusEl.className = "text-xs text-green-600 font-bold"; statusEl.innerText = "✅ Quét thành công!";
         }).catch(err => {
-            statusEl.className = "text-xs mt-1 text-red-500 font-medium"; statusEl.innerText = "❌ Không tìm thấy mã hợp lệ.";
+            statusEl.className = "text-xs text-red-500 font-medium"; statusEl.innerText = "❌ Không tìm thấy mã.";
         });
-        event.target.value = ''; 
     };
 
-    // ĐIỀU HƯỚNG UI
     window.toggleUserMenu = function() { document.getElementById('user-menu-dropdown').classList.toggle('hidden'); };
     document.addEventListener('click', (event) => {
         const menu = document.getElementById('user-menu-dropdown'); const btn = document.getElementById('btn-user-menu');
@@ -178,6 +184,7 @@
 
     window.showScreen = function(screenId) {
         document.getElementById('user-menu-dropdown').classList.add('hidden');
+        const screens = ['screen-login', 'screen-list', 'screen-detail', 'screen-admin'];
         screens.forEach(id => document.getElementById(id).classList.add('hidden'));
         document.getElementById(screenId).classList.remove('hidden');
         
@@ -185,15 +192,10 @@
         if (screenId === 'screen-list') {
             btnBack.classList.add('hidden'); document.getElementById('header-title').innerText = 'Ví Voucher';
             loadDataFromBackend();
-        } else if (screenId !== 'screen-login') {
+        } else {
             btnBack.classList.remove('hidden'); btnBack.onclick = () => showScreen('screen-list');
-            if (screenId === 'screen-add') document.getElementById('header-title').innerText = 'Thêm mới';
-            else if (screenId === 'screen-detail') document.getElementById('header-title').innerText = 'Chi tiết';
-            else if (screenId === 'screen-admin') {
-                document.getElementById('header-title').innerText = 'Admin Dashboard';
-                loadUsersAdmin();
-                loadAllVouchersAdmin();
-            }
+            if (screenId === 'screen-detail') document.getElementById('header-title').innerText = 'Sử dụng mã';
+            else if (screenId === 'screen-admin') document.getElementById('header-title').innerText = 'Admin Dashboard';
         }
     };
 
@@ -204,8 +206,22 @@
         renderVouchers();
     }
 
+    window.switchAdminSubTab = function(subtab) {
+        if(subtab === 'users') {
+            document.getElementById('admin-subtab-users').className = "flex-1 py-2 text-center bg-white rounded shadow-sm font-bold text-blue-600";
+            document.getElementById('admin-subtab-vouchers').className = "flex-1 py-2 text-center text-gray-600";
+            document.getElementById('admin-section-users').classList.remove('hidden');
+            document.getElementById('admin-section-vouchers').classList.add('hidden');
+        } else {
+            document.getElementById('admin-subtab-users').className = "flex-1 py-2 text-center text-gray-600";
+            document.getElementById('admin-subtab-vouchers').className = "flex-1 py-2 text-center bg-white rounded shadow-sm font-bold text-blue-600";
+            document.getElementById('admin-section-users').classList.add('hidden');
+            document.getElementById('admin-section-vouchers').classList.remove('hidden');
+        }
+    }
+
     // ==========================================
-    // XỬ LÝ ĐĂNG NHẬP (GỌI API BACKEND NODEJS)
+    // NGHIỆP VỤ AUTHENTICATION
     // ==========================================
     window.handleLogin = async function() {
         const email = document.getElementById('input-email').value;
@@ -219,85 +235,40 @@
                 body: JSON.stringify({ email, password })
             });
             const data = await response.json();
+            if (!response.ok) { errorEl.innerText = data.message; errorEl.classList.remove('hidden'); return; }
 
-            if (!response.ok) {
-                errorEl.innerText = data.message; errorEl.classList.remove('hidden'); return;
-            }
-
-            // Lưu phiên đăng nhập tạm thời vào bộ nhớ trình duyệt
             currentUser = data;
             sessionStorage.setItem('voucher_user', JSON.stringify(data));
-
-            document.getElementById('header-bar').classList.remove('hidden');
-            document.getElementById('menu-user-email').innerText = currentUser.email;
-            
-            if(currentUser.email === ADMIN_EMAIL) document.getElementById('btn-admin-panel').classList.remove('hidden');
-            else document.getElementById('btn-admin-panel').classList.add('hidden');
-
+            setupAppHeader();
             showScreen('screen-list');
-        } catch (err) {
-            errorEl.innerText = "Lỗi kết nối đến máy chủ Backend!"; errorEl.classList.remove('hidden');
-        }
+        } catch (err) { errorEl.innerText = "Lỗi kết nối máy chủ."; errorEl.classList.remove('hidden'); }
     };
 
     window.handleLogout = function() {
-        currentUser = null;
-        sessionStorage.removeItem('voucher_user');
+        currentUser = null; sessionStorage.removeItem('voucher_user');
         document.getElementById('header-bar').classList.add('hidden');
         document.getElementById('input-pass').value = '';
         showScreen('screen-login');
     };
 
-    // Tự động khôi phục phiên nếu F5 lại trang
-    function checkSession() {
-        const savedUser = sessionStorage.getItem('voucher_user');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-            document.getElementById('header-bar').classList.remove('hidden');
-            document.getElementById('menu-user-email').innerText = currentUser.email;
-            if(currentUser.email === ADMIN_EMAIL) document.getElementById('btn-admin-panel').classList.remove('hidden');
-            showScreen('screen-list');
-        } else {
-            showScreen('screen-login');
-        }
+    function setupAppHeader() {
+        document.getElementById('header-bar').classList.remove('hidden');
+        document.getElementById('menu-user-email').innerText = currentUser.email;
+        document.getElementById('menu-user-role').innerText = `Mã số: ${currentUser.userCode}`;
+        if(currentUser.role === 'admin') document.getElementById('btn-admin-panel').classList.remove('hidden');
+        else document.getElementById('btn-admin-panel').classList.add('hidden');
     }
 
     // ==========================================
-    // API: QUẢN LÝ VOUCHER KHÁCH / CÁ NHÂN
+    // KHÁCH HÀNG: HIỂN THỊ VÀ XÁC NHẬN SỬ DỤNG
     // ==========================================
     async function loadDataFromBackend() {
         if (!currentUser) return;
         try {
-            const res = await fetch(`${API_URL}/api/vouchers`, {
-                headers: { 'user-id': currentUser.id }
-            });
-            vouchers = await res.json();
-            renderVouchers();
-        } catch (e) { console.error("Lỗi tải voucher:", e); }
+            const res = await fetch(`${API_URL}/api/vouchers`, { headers: { 'user-id': currentUser.id } });
+            vouchers = await res.json(); renderVouchers();
+        } catch (e) { console.error(e); }
     }
-
-    window.addVoucher = async function() {
-        const code = document.getElementById('input-code').value.toUpperCase().trim();
-        const category = document.getElementById('input-category').value;
-        const expiry = document.getElementById('input-expiry').value;
-        if (!code || !expiry) { alert("Vui lòng điền đủ mã và hạn sử dụng!"); return; }
-
-        try {
-            const res = await fetch(`${API_URL}/api/vouchers`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'user-id': currentUser.id },
-                body: JSON.stringify({ code, category, expiry, userEmail: currentUser.email })
-            });
-            const data = await res.json();
-
-            if (!res.ok) { alert(data.message); return; }
-
-            document.getElementById('input-code').value = '';
-            document.getElementById('input-expiry').value = '';
-            currentTab = 'active'; switchTab('active');
-            showScreen('screen-list');
-        } catch (e) { alert("Lỗi khi kết nối Backend để thêm mã."); }
-    };
 
     window.renderVouchers = function() {
         const listEl = document.getElementById('voucher-list');
@@ -310,84 +281,119 @@
         let filtered = vouchers.filter(v => v.status === currentTab);
         if(filter !== 'all') filtered = filtered.filter(v => v.category === filter);
 
-        if (filtered.length === 0) { listEl.innerHTML = '<p class="text-center text-gray-500 mt-10 text-sm">Không có voucher.</p>'; return; }
+        if (filtered.length === 0) { listEl.innerHTML = '<p class="text-center text-gray-400 mt-10 text-xs">Không có mã giảm giá.</p>'; return; }
 
         filtered.forEach(v => {
+            // Định dạng hiển thị: 3 ký tự đầu và 3 ký tự cuối
+            let maskedCode = v.code;
+            if (v.code.length > 6) {
+                maskedCode = v.code.substring(0, 3) + "..." + v.code.substring(v.code.length - 3);
+            }
+
             const div = document.createElement('div');
-            div.className = `p-4 rounded-lg shadow-sm border bg-white flex justify-between items-center cursor-pointer active:bg-gray-50`;
-            div.onclick = () => window.showDetail(v);
+            div.className = `p-4 rounded-xl shadow-sm border bg-white flex justify-between items-center cursor-pointer active:bg-gray-50`;
+            div.onclick = () => window.handleVoucherClick(v);
             div.innerHTML = `
                 <div>
-                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase">${v.category}</span>
-                    <p class="font-mono font-bold text-gray-800 mt-2">${v.code}</p>
-                    <p class="text-xs text-gray-500 mt-1">HSD: ${v.expiry}</p>
+                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase">${v.category}</span>
+                    <p class="font-mono font-bold text-gray-800 text-lg mt-1 tracking-wider">${maskedCode}</p>
+                    <p class="text-[11px] text-gray-400 mt-0.5">Hạn dùng: ${v.expiry}</p>
                 </div>
+                <div class="text-gray-400 text-sm">❯</div>
             `;
             listEl.appendChild(div);
         });
     };
 
-    window.showDetail = function(voucher) {
-        currentVoucherId = voucher._id;
-        showScreen('screen-detail');
-        document.getElementById('detail-category').innerText = voucher.category;
-        document.getElementById('detail-code').innerText = voucher.code;
-        document.getElementById('detail-expiry').innerText = 'HSD: ' + voucher.expiry;
-        document.getElementById('qrcode').innerHTML = ''; document.getElementById('barcode').innerHTML = '';
-        
-        const btnMarkUsed = document.getElementById('btn-mark-used');
-        const stampUsed = document.getElementById('stamp-used');
-        
+    window.handleVoucherClick = async function(voucher) {
+        // Nếu mã đã dùng, cho phép xem trực tiếp luôn
         if (voucher.status === 'used') {
-            stampUsed.classList.remove('hidden'); btnMarkUsed.classList.add('hidden');
-            document.getElementById('qrcode').classList.add('opacity-30');
-        } else {
-            stampUsed.classList.add('hidden'); btnMarkUsed.classList.remove('hidden');
-            document.getElementById('qrcode').classList.remove('opacity-30');
-            new QRCode(document.getElementById('qrcode'), { text: voucher.code, width: 150, height: 150 });
-            JsBarcode("#barcode", voucher.code, { format: "CODE128", width: 2, height: 60, displayValue: false });
+            window.showDetail(voucher);
+            return;
         }
 
-        btnMarkUsed.onclick = async function() {
-            if(confirm("Xác nhận đã dùng mã này?")) {
-                await fetch(`${API_URL}/api/vouchers/${currentVoucherId}/used`, { method: 'PUT' });
-                loadDataFromBackend();
-                showScreen('screen-list');
-            }
-        };
+        // Nếu mã chưa dùng, yêu cầu kích hoạt xác nhận chuyển sang đã dùng ngay lập tức
+        if (confirm("⚠️ XÁC NHẬN SỬ DỤNG MÃ?\n\nSau khi bấm xác nhận, hệ thống sẽ mở mã QR/Mã vạch và tự động cập nhật trạng thái ĐÃ SỬ DỤNG. Bạn chỉ thực hiện thao tác này khi đứng trước nhân viên thu ngân.")) {
+            try {
+                const res = await fetch(`${API_URL}/api/vouchers/${voucher._id}/use-instantly`, { method: 'PUT' });
+                const updatedVoucher = await res.json();
+                if (res.ok) {
+                    window.showDetail(updatedVoucher);
+                } else {
+                    alert(updatedVoucher.message);
+                }
+            } catch (e) { alert("Lỗi kết nối máy chủ."); }
+        }
+    };
+
+    window.showDetail = function(voucher) {
+        showScreen('screen-detail');
+        document.getElementById('detail-category').innerText = voucher.category;
+        document.getElementById('detail-code').innerText = voucher.code; // Hiển thị mã rõ ràng khi mở
+        document.getElementById('detail-expiry').innerText = 'HSD: ' + voucher.expiry;
+        
+        document.getElementById('qrcode').innerHTML = ''; document.getElementById('barcode').innerHTML = '';
+        new QRCode(document.getElementById('qrcode'), { text: voucher.code, width: 160, height: 160 });
+        JsBarcode("#barcode", voucher.code, { format: "CODE128", width: 2.5, height: 60, displayValue: false });
+
+        document.getElementById('katinat-terms').classList.toggle('hidden', voucher.category !== 'Katinat');
     };
 
     // ==========================================
-    // API BACKEND: DÀNH RIÊNG CHO MÀN HÌNH ADMIN
+    // HỆ THỐNG QUẢN TRỊ (ADMIN DASHBOARD)
     // ==========================================
     async function loadUsersAdmin() {
         const listEl = document.getElementById('admin-user-list');
-        listEl.innerHTML = '<p class="text-xs text-gray-400">Đang tải thành viên...</p>';
+        const selectEl = document.getElementById('admin-v-user-select');
+        listEl.innerHTML = '<p class="text-xs text-gray-400">Đang tải...</p>';
         try {
             const res = await fetch(`${API_URL}/api/admin/users`);
-            const users = await res.json();
+            allUsersCache = await res.json();
+            
             listEl.innerHTML = '';
+            selectEl.innerHTML = '<option value="">Lưu trong kho chung (Chưa cấp)</option>';
             
-            if(users.length === 0) { listEl.innerHTML = '<p class="text-xs text-gray-400">Chưa có tài khoản nào.</p>'; return; }
-            
-            users.forEach(u => {
+            allUsersCache.forEach(u => {
+                // Dropdown cấp mã
+                selectEl.innerHTML += `<option value="${u._id}">${u.userCode} (${u.email})</option>`;
+                
+                // Card quản lý thành viên
                 listEl.innerHTML += `
-                    <div class="flex justify-between items-center p-2 bg-gray-50 border rounded text-xs">
-                        <div>
-                            <p class="font-bold text-gray-700">${u.email}</p>
-                            <p class="text-blue-600 font-mono mt-0.5">Mật khẩu: <span class="bg-blue-100 font-bold px-1 rounded">${u.password}</span></p>
+                    <div class="p-3 bg-gray-50 border rounded-xl flex flex-col gap-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs bg-gray-200 text-gray-700 font-bold px-2 py-0.5 rounded">${u.userCode}</span>
+                                <p class="text-sm font-bold text-gray-800 mt-1">${u.email}</p>
+                            </div>
+                            <button onclick="deleteUserAdmin('${u._id}', '${u.email}')" class="text-xs text-red-600 font-bold bg-red-50 px-2 py-1 rounded">Xóa</button>
                         </div>
-                        <button onclick="deleteUserAdmin('${u._id}', '${u.email}')" class="bg-red-100 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-200">Xóa User</button>
+                        <div class="flex items-center justify-between border-t pt-2 mt-1">
+                            <div class="flex items-center gap-1 text-xs text-gray-500">
+                                <span>Mật khẩu:</span>
+                                <input type="password" id="pass-user-${u._id}" value="${u.password}" readonly class="bg-transparent font-mono font-bold text-blue-600 outline-none w-20">
+                            </div>
+                            <button onclick="togglePassVisibility('${u._id}')" id="btn-pass-${u._id}" class="text-xs text-gray-600 border px-2 py-0.5 rounded bg-white shadow-sm">👁️ Hiện</button>
+                        </div>
                     </div>
                 `;
             });
-        } catch(e) { listEl.innerHTML = '<p class="text-xs text-red-500">Lỗi kết nối API tải user.</p>'; }
+        } catch(e) { listEl.innerHTML = '<p class="text-xs text-red-500">Lỗi API.</p>'; }
+    }
+
+    window.togglePassVisibility = function(id) {
+        const input = document.getElementById(`pass-user-${id}`);
+        const btn = document.getElementById(`btn-pass-${id}`);
+        if(input.type === 'password') {
+            input.type = 'text'; btn.innerText = '🙈 Ẩn';
+        } else {
+            input.type = 'password'; btn.innerText = '👁️ Hiện';
+        }
     }
 
     window.grantUserAccess = async function() {
         const emailInput = document.getElementById('admin-new-user-email');
         const email = emailInput.value.toLowerCase().trim();
-        if(!email || !email.includes('@')) { alert("Nhập email hợp lệ!"); return; }
+        if(!email.includes('@')) { alert("Nhập email hợp lệ!"); return; }
 
         try {
             const res = await fetch(`${API_URL}/api/admin/users`, {
@@ -396,58 +402,115 @@
                 body: JSON.stringify({ email })
             });
             const data = await res.json();
-
             if(!res.ok) { alert(data.message); return; }
-            emailInput.value = '';
-            loadUsersAdmin();
-            alert(`✅ Tạo tài khoản thành công!\n\nEmail: ${data.email}\nMật khẩu: ${data.password}`);
-        } catch (e) { alert("Lỗi khi gọi API tạo User."); }
+            emailInput.value = ''; loadUsersAdmin();
+            alert(`✅ Đã tạo khách hàng thành công!\n\nMã số: ${data.userCode}\nEmail: ${data.email}\nMật khẩu: ${data.password}`);
+        } catch (e) { alert("Lỗi kết nối."); }
     };
 
     window.deleteUserAdmin = async function(id, email) {
-        if(confirm(`⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa tài khoản ${email}?\nHành động này sẽ XÓA VĨNH VIỄN tài khoản và toàn bộ voucher của người này.`)) {
-            await fetch(`${API_URL}/api/admin/users/${id}`, { method: 'DELETE' });
-            loadUsersAdmin();
-            loadAllVouchersAdmin();
+        if(confirm(`⚠️ CẢNH BÁO: Xóa tài khoản ${email}?\nTài khoản và tất cả mã giảm giá đã cấp của người này sẽ bị xóa vĩnh viễn.`)) {
+            await fetch(`${API_URL}/api/admin/users/${id}`, { method: 'DELETE' }); loadUsersAdmin(); loadAllVouchersAdmin();
         }
+    };
+
+    // MANAGEMENT VOUCHER ADMIN
+    window.addVoucherAdmin = async function() {
+        const code = document.getElementById('admin-v-code').value.toUpperCase().trim();
+        const category = document.getElementById('admin-v-category').value;
+        const expiry = document.getElementById('admin-v-expiry').value;
+        const userId = document.getElementById('admin-v-user-select').value;
+        
+        let userEmail = "";
+        if (userId) {
+            const selectedUser = allUsersCache.find(u => u._id === userId);
+            if (selectedUser) userEmail = selectedUser.email;
+        }
+
+        if(!code || !expiry) { alert("Điền đủ mã và hạn dùng!"); return; }
+
+        try {
+            const res = await fetch(`${API_URL}/api/admin/vouchers`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, category, expiry, userId, userEmail })
+            });
+            const data = await res.json();
+            if(!res.ok) { alert(data.message); return; }
+            
+            document.getElementById('admin-v-code').value = '';
+            document.getElementById('admin-v-expiry').value = '';
+            loadAllVouchersAdmin();
+            alert("✅ Đã lưu mã giảm giá thành công!");
+        } catch (e) { alert("Lỗi API."); }
     };
 
     window.loadAllVouchersAdmin = async function() {
         const keyword = document.getElementById('admin-search').value;
         const listEl = document.getElementById('admin-voucher-list');
-        listEl.innerHTML = '<p class="text-center text-xs text-gray-400">Đang tải kho mã...</p>';
+        listEl.innerHTML = '<p class="text-center text-xs text-gray-400">Đang tải dữ liệu...</p>';
 
         try {
             const res = await fetch(`${API_URL}/api/admin/vouchers?keyword=${encodeURIComponent(keyword)}`);
             const allSysVouchers = await res.json();
             listEl.innerHTML = '';
 
-            if(allSysVouchers.length === 0) { listEl.innerHTML = '<p class="text-center text-red-500 text-xs">Không tìm thấy mã nào.</p>'; return; }
+            if(allSysVouchers.length === 0) { listEl.innerHTML = '<p class="text-center text-gray-500 text-xs">Kho trống.</p>'; return; }
 
             allSysVouchers.forEach(v => {
                 const div = document.createElement('div');
-                div.className = "p-3 bg-white border rounded shadow-sm flex justify-between items-center text-xs";
+                div.className = "p-3 bg-gray-50 border rounded-xl flex flex-col gap-1 text-xs";
                 div.innerHTML = `
-                    <div>
-                        <p class="font-bold font-mono text-blue-700">${v.code} <span class="text-gray-400">(${v.status})</span></p>
-                        <p class="text-gray-500 mt-0.5">Của: ${v.userEmail || 'Ẩn danh'}</p>
+                    <div class="flex justify-between items-center">
+                        <p class="font-bold font-mono text-blue-700 text-sm">${v.code}</p>
+                        <button onclick="deleteVoucherAdmin('${v._id}')" class="text-red-500 font-bold bg-white border px-2 py-0.5 rounded shadow-sm">Xóa</button>
                     </div>
-                    <button onclick="deleteVoucherAdmin('${v._id}')" class="bg-red-500 text-white px-2 py-1 rounded">Xóa mã</button>
+                    <div class="flex justify-between text-gray-500 mt-1">
+                        <span>Sở hữu: <b class="text-gray-700">${v.userEmail}</b></span>
+                        <span>Trạng thái: <b class="${v.status === 'active' ? 'text-green-600' : 'text-red-500'}">${v.status}</b></span>
+                    </div>
+                    ${v.userId ? '' : `
+                        <div class="mt-2 pt-2 border-t flex gap-2 items-center">
+                            <select id="assign-select-${v._id}" class="flex-1 border p-1 rounded bg-white text-[11px] outline-none">
+                                ${allUsersCache.map(u => `<option value="${u._id}">${u.userCode} (${u.email})</option>`).join('')}
+                            </select>
+                            <button onclick="assignVoucherDirect('${v._id}')" class="bg-blue-600 text-white px-2 py-1 rounded font-bold text-[11px]">Cấp mã</button>
+                        </div>
+                    `}
                 `;
                 listEl.appendChild(div);
             });
-        } catch (e) { listEl.innerHTML = '<p class="text-center text-red-500 text-xs">Lỗi tải kho voucher.</p>'; }
+        } catch (e) { listEl.innerHTML = '<p class="text-center text-red-500 text-xs">Lỗi hệ thống.</p>'; }
     };
 
+    window.assignVoucherDirect = async function(voucherId) {
+        const userId = document.getElementById(`assign-select-${voucherId}`).value;
+        const selectedUser = allUsersCache.find(u => u._id === userId);
+        if(!selectedUser) return;
+
+        try {
+            const res = await fetch(`${API_URL}/api/admin/vouchers/${voucherId}/assign`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, userEmail: selectedUser.email })
+            });
+            if(res.ok) { alert("Cấp mã cho khách thành công!"); loadAllVouchersAdmin(); }
+        } catch(e) { alert("Lỗi hệ thống."); }
+    }
+
     window.deleteVoucherAdmin = async function(id) {
-        if(confirm("Xóa vĩnh viễn voucher này khỏi tài khoản khách?")) {
-            await fetch(`${API_URL}/api/admin/vouchers/${id}`, { method: 'DELETE' });
-            loadAllVouchersAdmin();
+        if(confirm("Xóa mã này khỏi hệ thống?")) {
+            await fetch(`${API_URL}/api/admin/vouchers/${id}`, { method: 'DELETE' }); loadAllVouchersAdmin();
         }
     };
 
-    // Chạy kiểm tra phiên đăng nhập khi vừa mở trang web
-    checkSession();
+    // KHỞI ĐỘNG KIỂM TRA PHIÊN
+    const savedUser = sessionStorage.getItem('voucher_user');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser); setupAppHeader(); showScreen('screen-list');
+    } else {
+        showScreen('screen-login');
+    }
 </script>
 </body>
 </html>
