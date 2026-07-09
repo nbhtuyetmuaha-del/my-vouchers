@@ -26,13 +26,14 @@
 <div id="qr-reader-dummy" style="display: none;"></div>
 
 <div class="mobile-container flex flex-col">
+    <!-- HEADER -->
     <div id="header-bar" class="hidden bg-gray-900 text-white p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
         <h1 class="text-xl font-bold" id="header-title">Ví Voucher</h1>
         <div class="flex items-center gap-3">
             <button id="btn-back" class="hidden text-sm bg-gray-700 px-3 py-1 rounded">Quay lại</button>
             <button id="btn-user-menu" class="text-2xl focus:outline-none" onclick="toggleUserMenu()">👤</button>
         </div>
-
+        <!-- Dropdown Menu -->
         <div id="user-menu-dropdown" class="hidden absolute top-14 right-4 bg-white text-gray-800 rounded-lg shadow-xl border w-56 z-20 overflow-hidden">
             <div class="p-4 border-b bg-gray-50">
                 <p class="text-xs text-gray-500 mb-1">Đang đăng nhập với:</p>
@@ -45,25 +46,26 @@
         </div>
     </div>
 
+    <!-- MÀN HÌNH 0: ĐĂNG NHẬP -->
     <div id="screen-login" class="flex-1 flex flex-col items-center justify-center p-6 bg-gray-900 text-white">
         <div class="bg-white p-6 rounded-2xl shadow-xl w-full text-gray-900 text-center relative overflow-hidden">
-            <h2 id="login-title" class="text-2xl font-bold mb-2">Đăng Nhập</h2>
-            <p id="login-desc" class="text-sm text-gray-500 mb-6">Hệ thống quản lý nội bộ.</p>
+            <h2 class="text-2xl font-bold mb-2">Hệ Thống Voucher</h2>
+            <p class="text-sm text-gray-500 mb-6">Chỉ dành cho nhân viên có quyền.</p>
             
-            <input type="email" id="input-email" placeholder="Email" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-4 text-center">
+            <input type="email" id="input-email" placeholder="Nhập Email" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-4 text-center">
             <input type="password" id="input-pass" placeholder="Mật khẩu" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-6 text-center">
             
-            <button onclick="handleLogin()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Đăng Nhập</button>
+            <button onclick="handleLogin()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Đăng Nhập / Đăng Ký</button>
             <p id="login-error" class="text-red-500 text-sm mt-3 hidden"></p>
         </div>
     </div>
 
+    <!-- MÀN HÌNH 1: DANH SÁCH VOUCHER -->
     <div id="screen-list" class="hidden flex-1 p-0 overflow-y-auto pb-24 bg-gray-50">
         <div class="flex bg-white border-b sticky top-0 z-0">
             <button id="tab-active" class="flex-1 py-3 text-center tab-active transition" onclick="switchTab('active')">Chưa dùng <span id="count-active" class="ml-1 text-xs bg-blue-100 text-blue-600 py-0.5 px-2 rounded-full">0</span></button>
             <button id="tab-used" class="flex-1 py-3 text-center tab-inactive transition" onclick="switchTab('used')">Đã dùng <span id="count-used" class="ml-1 text-xs bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full">0</span></button>
         </div>
-
         <div class="p-4">
             <select id="filter-category" class="w-full text-sm border rounded p-2 mb-4 bg-white" onchange="renderVouchers()">
                 <option value="all">Tất cả thương hiệu</option>
@@ -73,10 +75,10 @@
             </select>
             <div id="voucher-list" class="space-y-3"></div>
         </div>
-        
         <button onclick="showScreen('screen-add')" class="fixed bottom-6 right-6 md:right-[calc(50%-210px)] bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg text-3xl flex items-center justify-center hover:bg-blue-700 transition z-10">+</button>
     </div>
 
+    <!-- MÀN HÌNH 2: THÊM VOUCHER MỚI -->
     <div id="screen-add" class="hidden flex-1 p-4 bg-gray-50">
         <div class="space-y-4">
             <div>
@@ -104,6 +106,7 @@
         </div>
     </div>
 
+    <!-- MÀN HÌNH 3: CHI TIẾT VOUCHER -->
     <div id="screen-detail" class="hidden flex-1 p-0 bg-white flex flex-col">
         <div class="bg-gray-50 p-6 flex flex-col items-center border-b flex-1 relative">
             <span id="detail-category" class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2"></span>
@@ -116,30 +119,49 @@
         </div>
     </div>
 
+    <!-- MÀN HÌNH 4: ADMIN DASHBOARD CẢI TIẾN -->
     <div id="screen-admin" class="hidden flex-1 p-4 bg-gray-100 overflow-y-auto">
-        <h2 class="font-bold text-xl mb-4 text-gray-800">Quản Lý Toàn Bộ Voucher</h2>
-        <div class="bg-blue-100 text-blue-800 p-3 rounded mb-4 text-sm">
-            <b>Lưu ý:</b> Tính năng Thêm/Sửa/Xóa User vui lòng thực hiện trên <a href="https://console.firebase.google.com/" target="_blank" class="underline font-bold">Firebase Console</a>.
+        
+        <!-- PHẦN 1: QUẢN LÝ QUYỀN TRUY CẬP (WHITELIST) -->
+        <div class="bg-white p-4 rounded shadow-sm mb-6 border">
+            <h3 class="font-bold text-lg mb-2 text-blue-700">🔒 Cấp Quyền Truy Cập</h3>
+            <p class="text-xs text-gray-500 mb-3">Chỉ những Email nằm trong danh sách này mới được phép đăng nhập/sử dụng web.</p>
+            
+            <div class="flex gap-2 mb-4">
+                <input type="email" id="admin-new-user-email" placeholder="Nhập email nhân viên..." class="flex-1 border p-2 rounded text-sm outline-none focus:border-blue-500">
+                <button onclick="grantUserAccess()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold">Thêm</button>
+            </div>
+            
+            <div class="border-t pt-2 mt-2">
+                <h4 class="text-sm font-bold text-gray-700 mb-2">Danh sách được duyệt:</h4>
+                <div id="admin-user-list" class="space-y-1">
+                    <!-- Render danh sách email được cấp quyền -->
+                </div>
+            </div>
         </div>
-        <div class="flex gap-2 mb-4">
-            <input type="text" id="admin-search" placeholder="Nhập mã cần tìm..." class="flex-1 border p-2 rounded text-sm">
-            <button onclick="loadAllVouchersAdmin()" class="bg-gray-800 text-white px-3 py-2 rounded text-sm">Tìm kiếm</button>
-        </div>
-        <div id="admin-voucher-list" class="space-y-2 text-sm">
-            <p class="text-center text-gray-500 mt-4">Bấm tìm kiếm để tải dữ liệu...</p>
+
+        <!-- PHẦN 2: QUẢN LÝ VOUCHER -->
+        <div class="bg-white p-4 rounded shadow-sm border">
+            <h3 class="font-bold text-lg mb-2 text-gray-800">🎟️ Quản Lý Tất Cả Mã</h3>
+            <div class="flex gap-2 mb-4 mt-2">
+                <input type="text" id="admin-search" placeholder="Nhập mã voucher cần tìm..." class="flex-1 border p-2 rounded text-sm outline-none focus:border-gray-500">
+                <button onclick="loadAllVouchersAdmin()" class="bg-gray-800 text-white px-3 py-2 rounded text-sm">Tìm kiếm</button>
+            </div>
+            <div id="admin-voucher-list" class="space-y-2 text-sm">
+                <p class="text-center text-gray-500 mt-2 text-xs">Bấm tìm kiếm để tải dữ liệu...</p>
+            </div>
         </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, collectionGroup, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    // Thêm getDoc, setDoc cho tính năng Whitelist
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, collectionGroup, query, where, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 🔴 1. EMAIL ADMIN ĐÃ ĐƯỢC TÍCH HỢP 🔴
     const ADMIN_EMAIL = "admin@admin.com";
 
-    // 🔴 2. FIREBASE CONFIG ĐÃ ĐƯỢC TÍCH HỢP 🔴
     const firebaseConfig = {
       apiKey: "AIzaSyD7Eup9NymCmiSL8156zBOwoH6Q8ZVOGq0",
       authDomain: "vi-voucher-app.firebaseapp.com",
@@ -160,7 +182,7 @@
     let currentTab = 'active'; 
     const screens = ['screen-login', 'screen-list', 'screen-add', 'screen-detail', 'screen-admin'];
 
-    // QUÉT MÃ TỪ ẢNH
+    // QUÉT ẢNH
     window.scanImage = function(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -170,8 +192,7 @@
         statusEl.classList.remove('hidden');
 
         const html5QrCode = new Html5Qrcode("qr-reader-dummy");
-        html5QrCode.scanFile(file, true)
-        .then(decodedText => {
+        html5QrCode.scanFile(file, true).then(decodedText => {
             document.getElementById('input-code').value = decodedText.toUpperCase();
             statusEl.className = "text-xs mt-1 text-green-600 font-bold";
             statusEl.innerText = "✅ Quét thành công!";
@@ -183,7 +204,7 @@
         event.target.value = ''; 
     };
 
-    // UI CONTROL
+    // GIAO DIỆN CHUNG
     window.toggleUserMenu = function() { document.getElementById('user-menu-dropdown').classList.toggle('hidden'); };
     document.addEventListener('click', (event) => {
         const menu = document.getElementById('user-menu-dropdown');
@@ -203,56 +224,82 @@
         
         const btnBack = document.getElementById('btn-back');
         if (screenId === 'screen-list') {
-            btnBack.classList.add('hidden');
-            document.getElementById('header-title').innerText = 'Ví Voucher';
+            btnBack.classList.add('hidden'); document.getElementById('header-title').innerText = 'Ví Voucher';
             renderVouchers();
         } else if (screenId !== 'screen-login') {
-            btnBack.classList.remove('hidden');
-            btnBack.onclick = () => showScreen('screen-list');
+            btnBack.classList.remove('hidden'); btnBack.onclick = () => showScreen('screen-list');
             if (screenId === 'screen-add') document.getElementById('header-title').innerText = 'Thêm mới';
             else if (screenId === 'screen-detail') document.getElementById('header-title').innerText = 'Chi tiết';
-            else if (screenId === 'screen-admin') document.getElementById('header-title').innerText = 'Admin Dashboard';
+            else if (screenId === 'screen-admin') {
+                document.getElementById('header-title').innerText = 'Admin Dashboard';
+                loadWhitelistAdmin(); // Tự động load danh sách user khi vào admin
+            }
         }
     };
 
-    // XỬ LÝ TAB (CHƯA DÙNG / ĐÃ DÙNG)
     window.switchTab = function(tabName) {
         currentTab = tabName;
-        if(tabName === 'active') {
-            document.getElementById('tab-active').className = "flex-1 py-3 text-center tab-active transition";
-            document.getElementById('tab-used').className = "flex-1 py-3 text-center tab-inactive transition";
-        } else {
-            document.getElementById('tab-active').className = "flex-1 py-3 text-center tab-inactive transition";
-            document.getElementById('tab-used').className = "flex-1 py-3 text-center tab-active transition";
-        }
+        document.getElementById('tab-active').className = `flex-1 py-3 text-center transition ${tabName === 'active' ? 'tab-active' : 'tab-inactive'}`;
+        document.getElementById('tab-used').className = `flex-1 py-3 text-center transition ${tabName === 'used' ? 'tab-active' : 'tab-inactive'}`;
         renderVouchers();
     }
 
-    // ĐĂNG NHẬP (KHÔNG CHO PHÉP ĐĂNG KÝ)
+    // ==========================================
+    // KIỂM TRA QUYỀN & ĐĂNG NHẬP
+    // ==========================================
     window.handleLogin = async function() {
-        const email = document.getElementById('input-email').value;
+        const email = document.getElementById('input-email').value.toLowerCase().trim();
         const pass = document.getElementById('input-pass').value;
         const errorEl = document.getElementById('login-error');
         if (!email || !pass) { errorEl.innerText = "Điền đầy đủ thông tin."; errorEl.classList.remove('hidden'); return; }
+
         try {
-            await signInWithEmailAndPassword(auth, email, pass);
+            // KIỂM TRA DANH SÁCH CẤP QUYỀN (Nếu không phải admin)
+            if (email !== ADMIN_EMAIL) {
+                const whitelistRef = doc(db, "whitelist", email);
+                const whitelistSnap = await getDoc(whitelistRef);
+                
+                if (!whitelistSnap.exists()) {
+                    errorEl.innerText = "⛔ Email này chưa được Admin cấp quyền truy cập!";
+                    errorEl.classList.remove('hidden');
+                    return; // Chặn ngay lập tức
+                }
+            }
+
+            // NẾU ĐÃ CÓ QUYỀN -> TIẾN HÀNH ĐĂNG NHẬP HOẶC TẠO MỚI
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) {
+                // Nếu lỗi do chưa tạo mật khẩu bao giờ -> Cho phép tạo mới
+                if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+                    await createUserWithEmailAndPassword(auth, email, pass);
+                } else {
+                    errorEl.innerText = "Sai mật khẩu."; errorEl.classList.remove('hidden');
+                }
+            }
         } catch (error) {
-            errorEl.innerText = "Sai thông tin hoặc tài khoản không tồn tại."; errorEl.classList.remove('hidden');
+            errorEl.innerText = "Lỗi kết nối. Vui lòng thử lại."; errorEl.classList.remove('hidden');
         }
     };
 
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         if (user) {
+            // KIỂM TRA LẠI QUYỀN (Đề phòng trường hợp đang dùng bị Admin thu hồi quyền)
+            if (user.email !== ADMIN_EMAIL) {
+                const wlSnap = await getDoc(doc(db, "whitelist", user.email));
+                if (!wlSnap.exists()) {
+                    alert("Quyền truy cập của bạn đã bị thu hồi bởi Admin!");
+                    signOut(auth);
+                    return;
+                }
+            }
+
             currentUser = user;
             document.getElementById('header-bar').classList.remove('hidden');
             document.getElementById('menu-user-email').innerText = user.email;
             
-            // Xử lý hiển thị nút Admin Dashboard
-            if(user.email === ADMIN_EMAIL) {
-                document.getElementById('btn-admin-panel').classList.remove('hidden');
-            } else {
-                document.getElementById('btn-admin-panel').classList.add('hidden');
-            }
+            if(user.email === ADMIN_EMAIL) document.getElementById('btn-admin-panel').classList.remove('hidden');
+            else document.getElementById('btn-admin-panel').classList.add('hidden');
 
             loadDataFromFirebase();
             showScreen('screen-list');
@@ -263,7 +310,105 @@
         }
     });
 
-    // FIRESTORE: LOAD DỮ LIỆU CÁ NHÂN
+    // ==========================================
+    // CÁC TÍNH NĂNG ADMIN DASHBOARD
+    // ==========================================
+    window.loadWhitelistAdmin = async function() {
+        if(currentUser.email !== ADMIN_EMAIL) return;
+        const listEl = document.getElementById('admin-user-list');
+        listEl.innerHTML = '<p class="text-xs text-gray-500">Đang tải...</p>';
+        
+        const querySnapshot = await getDocs(collection(db, "whitelist"));
+        listEl.innerHTML = '';
+        
+        if(querySnapshot.empty) {
+            listEl.innerHTML = '<p class="text-xs text-gray-500">Chưa có ai được cấp quyền.</p>'; return;
+        }
+
+        querySnapshot.forEach((docSnap) => {
+            const userEmail = docSnap.id;
+            listEl.innerHTML += `
+                <div class="flex justify-between items-center p-2 bg-gray-50 border rounded mt-1">
+                    <span class="text-sm font-bold text-gray-700">${userEmail}</span>
+                    <button onclick="removeUserAccess('${userEmail}')" class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded font-bold hover:bg-red-200">Thu hồi</button>
+                </div>
+            `;
+        });
+    }
+
+    window.grantUserAccess = async function() {
+        if(currentUser.email !== ADMIN_EMAIL) return;
+        const emailInput = document.getElementById('admin-new-user-email');
+        const newEmail = emailInput.value.toLowerCase().trim();
+        
+        if(!newEmail || !newEmail.includes('@')) { alert("Vui lòng nhập Email hợp lệ."); return; }
+        if(newEmail === ADMIN_EMAIL) { alert("Admin mặc định đã có toàn quyền!"); return; }
+
+        try {
+            await setDoc(doc(db, "whitelist", newEmail), { createdAt: Date.now() });
+            emailInput.value = '';
+            loadWhitelistAdmin(); // Load lại danh sách
+            alert("Đã cấp quyền thành công! Khách giờ có thể tự đăng nhập bằng Email này.");
+        } catch(e) { alert("Lỗi khi thêm: " + e.message); }
+    }
+
+    window.removeUserAccess = async function(emailToRemove) {
+        if(confirm(`Thu hồi quyền của ${emailToRemove}? Người này sẽ bị chặn đăng nhập ngay lập tức.`)) {
+            try {
+                await deleteDoc(doc(db, "whitelist", emailToRemove));
+                loadWhitelistAdmin();
+            } catch(e) { alert("Lỗi khi xóa: " + e.message); }
+        }
+    }
+
+    window.loadAllVouchersAdmin = async function() {
+        if(currentUser.email !== ADMIN_EMAIL) return;
+        const keyword = document.getElementById('admin-search').value.toUpperCase().trim();
+        const listEl = document.getElementById('admin-voucher-list');
+        listEl.innerHTML = '<p class="text-center text-xs text-gray-500">Đang tải dữ liệu toàn hệ thống...</p>';
+
+        try {
+            const vouchersQuery = query(collectionGroup(db, 'vouchers'));
+            const querySnapshot = await getDocs(vouchersQuery);
+            let allSysVouchers = [];
+            
+            querySnapshot.forEach((doc) => {
+                const userId = doc.ref.parent.parent.id;
+                allSysVouchers.push({ id: doc.id, userId: userId, ...doc.data() });
+            });
+
+            if(keyword !== "") allSysVouchers = allSysVouchers.filter(v => v.code.includes(keyword));
+
+            listEl.innerHTML = '';
+            if(allSysVouchers.length === 0) { listEl.innerHTML = '<p class="text-center text-red-500 text-xs">Không tìm thấy mã nào.</p>'; return; }
+
+            allSysVouchers.sort((a,b) => b.createdAt - a.createdAt).forEach(v => {
+                const div = document.createElement('div');
+                div.className = "p-3 bg-white border rounded shadow-sm flex justify-between items-center";
+                div.innerHTML = `
+                    <div>
+                        <p class="font-bold font-mono text-blue-700">${v.code} <span class="text-xs text-gray-400">(${v.status})</span></p>
+                        <p class="text-xs text-gray-500">Người dùng ID: ${v.userId.substring(0, 8)}...</p>
+                    </div>
+                    <button onclick="deleteGlobalVoucher('${v.userId}', '${v.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Xóa mã</button>
+                `;
+                listEl.appendChild(div);
+            });
+        } catch (error) { listEl.innerHTML = '<p class="text-center text-red-500 text-xs">Lỗi lấy dữ liệu!</p>'; }
+    };
+
+    window.deleteGlobalVoucher = async function(userId, voucherId) {
+        if(confirm("Bạn có chắc chắn muốn XÓA VĨNH VIỄN mã này khỏi tài khoản của khách?")) {
+            try {
+                await deleteDoc(doc(db, `users/${userId}/vouchers`, voucherId));
+                alert("Đã xóa thành công!"); loadAllVouchersAdmin(); 
+            } catch(e) { alert("Lỗi khi xóa: " + e.message); }
+        }
+    };
+
+    // ==========================================
+    // NGƯỜI DÙNG: LOAD VÀ QUẢN LÝ VOUCHER
+    // ==========================================
     async function loadDataFromFirebase() {
         if (!currentUser) return;
         vouchers = []; 
@@ -272,18 +417,14 @@
         renderVouchers();
     }
 
-    // FIRESTORE: THÊM MÃ VÀ KIỂM TRA TRÙNG LẶP
     window.addVoucher = async function() {
         const code = document.getElementById('input-code').value.toUpperCase().trim();
         const category = document.getElementById('input-category').value;
         const expiry = document.getElementById('input-expiry').value;
         if (!code || !expiry) { alert("Vui lòng nhập đủ thông tin!"); return; }
 
-        // CHECK TRÙNG MÃ
-        const isDuplicate = vouchers.some(v => v.code === code);
-        if (isDuplicate) {
-            alert(`Mã "${code}" đã tồn tại trong ví của bạn! Vui lòng kiểm tra lại.`);
-            return;
+        if (vouchers.some(v => v.code === code)) {
+            alert(`Mã "${code}" đã tồn tại trong ví của bạn!`); return;
         }
 
         const newVoucher = { code, category, expiry, status: 'active', createdAt: Date.now() };
@@ -292,28 +433,22 @@
         
         document.getElementById('input-code').value = '';
         document.getElementById('input-expiry').value = '';
-        currentTab = 'active'; 
-        switchTab('active');
+        currentTab = 'active'; switchTab('active');
         showScreen('screen-list');
     };
 
-    // RENDER DANH SÁCH VÀ ĐẾM SỐ LƯỢNG
     window.renderVouchers = function() {
         const listEl = document.getElementById('voucher-list');
         const filter = document.getElementById('filter-category').value;
         listEl.innerHTML = '';
 
-        const activeCount = vouchers.filter(v => v.status === 'active').length;
-        const usedCount = vouchers.filter(v => v.status === 'used').length;
-        document.getElementById('count-active').innerText = activeCount;
-        document.getElementById('count-used').innerText = usedCount;
+        document.getElementById('count-active').innerText = vouchers.filter(v => v.status === 'active').length;
+        document.getElementById('count-used').innerText = vouchers.filter(v => v.status === 'used').length;
 
         let filtered = vouchers.filter(v => v.status === currentTab);
         if(filter !== 'all') filtered = filtered.filter(v => v.category === filter);
 
-        if (filtered.length === 0) {
-            listEl.innerHTML = '<p class="text-center text-gray-500 mt-10">Không có voucher nào trong mục này.</p>'; return;
-        }
+        if (filtered.length === 0) { listEl.innerHTML = '<p class="text-center text-gray-500 mt-10">Không có voucher nào.</p>'; return; }
 
         [...filtered].sort((a,b) => b.createdAt - a.createdAt).forEach(v => {
             const div = document.createElement('div');
@@ -332,7 +467,6 @@
         });
     };
 
-    // XEM CHI TIẾT
     window.showDetail = function(voucher) {
         currentVoucherId = voucher.id;
         showScreen('screen-detail');
@@ -365,68 +499,6 @@
             }
         };
     };
-
-    // TÍNH NĂNG ADMIN DASHBOARD
-    window.loadAllVouchersAdmin = async function() {
-        if(currentUser.email !== ADMIN_EMAIL) {
-            alert("Bạn không có quyền truy cập chức năng này."); return;
-        }
-
-        const keyword = document.getElementById('admin-search').value.toUpperCase().trim();
-        const listEl = document.getElementById('admin-voucher-list');
-        listEl.innerHTML = '<p class="text-center">Đang tải dữ liệu toàn hệ thống...</p>';
-
-        try {
-            const vouchersQuery = query(collectionGroup(db, 'vouchers'));
-            const querySnapshot = await getDocs(vouchersQuery);
-            
-            let allSysVouchers = [];
-            querySnapshot.forEach((doc) => {
-                const userId = doc.ref.parent.parent.id;
-                allSysVouchers.push({ id: doc.id, userId: userId, ...doc.data() });
-            });
-
-            if(keyword !== "") {
-                allSysVouchers = allSysVouchers.filter(v => v.code.includes(keyword));
-            }
-
-            listEl.innerHTML = '';
-            if(allSysVouchers.length === 0) {
-                listEl.innerHTML = '<p class="text-center text-red-500">Không tìm thấy mã nào.</p>';
-                return;
-            }
-
-            allSysVouchers.sort((a,b) => b.createdAt - a.createdAt).forEach(v => {
-                const div = document.createElement('div');
-                div.className = "p-3 bg-white border rounded shadow-sm flex justify-between items-center";
-                div.innerHTML = `
-                    <div>
-                        <p class="font-bold font-mono text-blue-700">${v.code} <span class="text-xs text-gray-400">(${v.status})</span></p>
-                        <p class="text-xs text-gray-500">Thuộc ID: ${v.userId.substring(0, 8)}...</p>
-                    </div>
-                    <button onclick="deleteGlobalVoucher('${v.userId}', '${v.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Xóa mã</button>
-                `;
-                listEl.appendChild(div);
-            });
-
-        } catch (error) {
-            console.error(error);
-            listEl.innerHTML = '<p class="text-center text-red-500">Lỗi lấy dữ liệu! (Hãy chắc chắn bạn đã cập nhật Firestore Rules cho Admin).</p>';
-        }
-    };
-
-    window.deleteGlobalVoucher = async function(userId, voucherId) {
-        if(confirm("Bạn có chắc chắn muốn XÓA VĨNH VIỄN mã này khỏi tài khoản của khách?")) {
-            try {
-                await deleteDoc(doc(db, `users/${userId}/vouchers`, voucherId));
-                alert("Đã xóa thành công!");
-                loadAllVouchersAdmin(); 
-            } catch(e) {
-                alert("Lỗi khi xóa: " + e.message);
-            }
-        }
-    };
-
 </script>
 </body>
 </html>
