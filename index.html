@@ -19,8 +19,6 @@
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: bold; }
         .tab-inactive { color: #6b7280; font-weight: 600; }
-        
-        /* Hiển thị thanh cuộn đẹp gọn cho phần điều khoản */
         .terms-scroll::-webkit-scrollbar { width: 4px; }
         .terms-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
     </style>
@@ -51,7 +49,7 @@
     <div id="screen-login" class="flex-1 flex flex-col items-center justify-center p-6 bg-gray-900 text-white">
         <div class="bg-white p-6 rounded-2xl shadow-xl w-full text-gray-900 text-center relative overflow-hidden">
             <h2 class="text-2xl font-bold mb-2">Hệ Thống Voucher</h2>
-            <p class="text-sm text-gray-500 mb-6">Nhập tài khoản để truy cập vào hệ thống.</p>
+            <p class="text-sm text-gray-500 mb-6">Nhập tài khoản bảo mật để truy cập vào hệ thống.</p>
             <input type="email" id="input-email" placeholder="Nhập Email" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-4 text-center">
             <input type="password" id="input-pass" placeholder="Mật khẩu" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-6 text-center">
             <button onclick="handleLogin()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Đăng Nhập</button>
@@ -84,11 +82,9 @@
             <p id="detail-code" class="text-2xl font-mono font-bold tracking-widest text-gray-800"></p>
             <p id="detail-expiry" class="text-sm text-gray-500 mt-2 font-medium"></p>
         </div>
-        
         <div id="katinat-terms" class="hidden p-4 text-gray-800 leading-relaxed overflow-y-auto terms-scroll flex-1">
             <h3 class="font-bold text-[15px] mb-1">Cách sử dụng</h3>
             <p class="mb-3 text-[13px] text-justify">Khách hàng đổi điểm để nhận voucher trên App và xuất trình cho nhân viên thu ngân trước khi thanh toán để được áp dụng</p>
-            
             <h3 class="font-bold text-[15px] mb-1">Điều kiện áp dụng</h3>
             <ul class="list-disc pl-4 space-y-1.5 text-[13px] text-justify pr-2">
                 <li>Voucher có hạn sử dụng 14 ngày kể từ ngày khách hàng nhận voucher hoặc đến thời hạn được ghi tùy điều kiện nào đến trước.</li>
@@ -105,9 +101,6 @@
                 <li>Techcombank không chịu trách nhiệm đối với chất lượng của sản phẩm hoặc dịch vụ được cung cấp cũng như đối với các tranh chấp về sau (nếu có) giữa khách hàng và bên cung cấp.</li>
                 <li>Cửa hàng có quyền từ chối khách hàng sử dụng voucher nếu không thỏa mãn các điều kiện đã nêu trên đây hoặc nếu có dấu hiệu đầu cơ/gian lận.</li>
             </ul>
-
-            <h3 class="font-bold text-[15px] mb-1 mt-4">Liên hệ hỗ trợ</h3>
-            <p class="text-[13px] text-justify">Từ niềm đam mê khám phá hương vị ở những vùng đất mới, những nghệ nhân KATINAT không ngừng theo đuổi sứ mệnh mang đến phong vị mới...</p>
         </div>
     </div>
 
@@ -179,6 +172,7 @@
     let vouchers = [];
     let allUsersCache = [];
     let currentUser = null;
+    let userToken = null; // Biến lưu trữ Token JWT bảo mật
     let currentTab = 'active'; 
 
     window.scanImage = function(event) {
@@ -214,12 +208,9 @@
             loadDataFromBackend();
         } else {
             btnBack.classList.remove('hidden'); btnBack.onclick = () => showScreen('screen-list');
-            if (screenId === 'screen-detail') {
-                document.getElementById('header-title').innerText = 'Sử dụng mã';
-            }
+            if (screenId === 'screen-detail') document.getElementById('header-title').innerText = 'Sử dụng mã';
             else if (screenId === 'screen-admin') {
                 document.getElementById('header-title').innerText = 'Admin Dashboard';
-                // VÁ LỖI: Tự động tải lại dữ liệu khi mở màn hình Admin
                 loadUsersAdmin();
                 loadAllVouchersAdmin();
             }
@@ -239,13 +230,13 @@
             document.getElementById('admin-subtab-vouchers').className = "flex-1 py-2 text-center text-gray-600";
             document.getElementById('admin-section-users').classList.remove('hidden');
             document.getElementById('admin-section-vouchers').classList.add('hidden');
-            loadUsersAdmin(); // VÁ LỖI: Tải lại khi chuyển tab
+            loadUsersAdmin();
         } else {
             document.getElementById('admin-subtab-users').className = "flex-1 py-2 text-center text-gray-600";
             document.getElementById('admin-subtab-vouchers').className = "flex-1 py-2 text-center bg-white rounded shadow-sm font-bold text-blue-600";
             document.getElementById('admin-section-users').classList.add('hidden');
             document.getElementById('admin-section-vouchers').classList.remove('hidden');
-            loadAllVouchersAdmin(); // VÁ LỖI: Tải lại khi chuyển tab
+            loadAllVouchersAdmin();
         }
     }
 
@@ -266,15 +257,20 @@
             const data = await response.json();
             if (!response.ok) { errorEl.innerText = data.message; errorEl.classList.remove('hidden'); return; }
 
-            currentUser = data;
-            sessionStorage.setItem('voucher_user', JSON.stringify(data));
+            // Lưu trữ an toàn cả Token JWT và Thông tin user
+            userToken = data.token;
+            currentUser = data.user;
+            sessionStorage.setItem('voucher_token', data.token);
+            sessionStorage.setItem('voucher_user', JSON.stringify(data.user));
+            
             setupAppHeader();
             showScreen('screen-list');
         } catch (err) { errorEl.innerText = "Lỗi kết nối máy chủ."; errorEl.classList.remove('hidden'); }
     };
 
     window.handleLogout = function() {
-        currentUser = null; sessionStorage.removeItem('voucher_user');
+        currentUser = null; userToken = null;
+        sessionStorage.clear();
         document.getElementById('header-bar').classList.add('hidden');
         document.getElementById('input-pass').value = '';
         showScreen('screen-login');
@@ -289,12 +285,15 @@
     }
 
     // ==========================================
-    // KHÁCH HÀNG: HIỂN THỊ VÀ XÁC NHẬN SỬ DỤNG
+    // KHÁCH HÀNG: ĐÍNH KÈM TOKEN ĐỂ LẤY VÀ SỬ DỤNG MÃ
     // ==========================================
     async function loadDataFromBackend() {
         if (!currentUser) return;
         try {
-            const res = await fetch(`${API_URL}/api/vouchers`, { headers: { 'user-id': currentUser.id } });
+            const res = await fetch(`${API_URL}/api/vouchers`, { 
+                headers: { 'Authorization': `Bearer ${userToken}` } 
+            });
+            if(res.status === 401 || res.status === 403) { handleLogout(); return; }
             vouchers = await res.json(); renderVouchers();
         } catch (e) { console.error(e); }
     }
@@ -334,20 +333,16 @@
     };
 
     window.handleVoucherClick = async function(voucher) {
-        if (voucher.status === 'used') {
-            window.showDetail(voucher);
-            return;
-        }
+        if (voucher.status === 'used') { window.showDetail(voucher); return; }
 
         if (confirm("⚠️ XÁC NHẬN SỬ DỤNG MÃ?\n\nSau khi bấm xác nhận, hệ thống sẽ mở mã và tự động cập nhật trạng thái ĐÃ SỬ DỤNG. Bạn chỉ thực hiện thao tác này khi đứng trước nhân viên thu ngân.")) {
             try {
-                const res = await fetch(`${API_URL}/api/vouchers/${voucher._id}/use-instantly`, { method: 'PUT' });
+                const res = await fetch(`${API_URL}/api/vouchers/${voucher._id}/use-instantly`, { 
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
                 const updatedVoucher = await res.json();
-                if (res.ok) {
-                    window.showDetail(updatedVoucher);
-                } else {
-                    alert(updatedVoucher.message);
-                }
+                if (res.ok) { window.showDetail(updatedVoucher); } else { alert(updatedVoucher.message); }
             } catch (e) { alert("Lỗi kết nối máy chủ."); }
         }
     };
@@ -373,21 +368,20 @@
         const selectEl = document.getElementById('admin-v-user-select');
         listEl.innerHTML = '<p class="text-xs text-gray-400">Đang tải...</p>';
         try {
-            const res = await fetch(`${API_URL}/api/admin/users`);
+            const res = await fetch(`${API_URL}/api/admin/users`, {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            });
             allUsersCache = await res.json();
             
             listEl.innerHTML = '';
             selectEl.innerHTML = '<option value="">Lưu trong kho chung (Chưa cấp)</option>';
             
-            if(allUsersCache.length === 0) {
-                listEl.innerHTML = '<p class="text-xs text-gray-500">Chưa có khách hàng nào.</p>';
-                return;
-            }
+            if(allUsersCache.length === 0) { listEl.innerHTML = '<p class="text-xs text-gray-500">Chưa có khách hàng nào.</p>'; return; }
 
             allUsersCache.forEach(u => {
                 selectEl.innerHTML += `<option value="${u._id}">${u.userCode} (${u.email})</option>`;
                 listEl.innerHTML += `
-                    <div class="p-3 bg-gray-50 border rounded-xl flex flex-col gap-2">
+                    <div class="p-3 bg-white border rounded-xl flex flex-col gap-2 shadow-sm">
                         <div class="flex justify-between items-start">
                             <div>
                                 <span class="text-xs bg-gray-200 text-gray-700 font-bold px-2 py-0.5 rounded">${u.userCode}</span>
@@ -396,11 +390,8 @@
                             <button onclick="deleteUserAdmin('${u._id}', '${u.email}')" class="text-xs text-red-600 font-bold bg-red-50 px-2 py-1 rounded">Xóa</button>
                         </div>
                         <div class="flex items-center justify-between border-t pt-2 mt-1">
-                            <div class="flex items-center gap-1 text-xs text-gray-500">
-                                <span>Mật khẩu:</span>
-                                <input type="password" id="pass-user-${u._id}" value="${u.password}" readonly class="bg-transparent font-mono font-bold text-blue-600 outline-none w-20">
-                            </div>
-                            <button onclick="togglePassVisibility('${u._id}')" id="btn-pass-${u._id}" class="text-xs text-gray-600 border px-2 py-0.5 rounded bg-white shadow-sm">👁️ Hiện</button>
+                            <span class="text-[11px] text-gray-400">🔒 Mật khẩu đã được mã hóa</span>
+                            <button onclick="resetPasswordAdmin('${u._id}', '${u.email}')" class="text-xs text-blue-600 border border-blue-200 px-2 py-0.5 rounded bg-blue-50 shadow-sm font-bold">🔑 Đổi Pass</button>
                         </div>
                     </div>
                 `;
@@ -408,14 +399,23 @@
         } catch(e) { listEl.innerHTML = '<p class="text-xs text-red-500">Lỗi API.</p>'; }
     }
 
-    window.togglePassVisibility = function(id) {
-        const input = document.getElementById(`pass-user-${id}`);
-        const btn = document.getElementById(`btn-pass-${id}`);
-        if(input.type === 'password') {
-            input.type = 'text'; btn.innerText = '🙈 Ẩn';
-        } else {
-            input.type = 'password'; btn.innerText = '👁️ Hiện';
-        }
+    window.resetPasswordAdmin = async function(id, email) {
+        const newPassword = prompt(`Nhập mật khẩu mới cho tài khoản ${email}:`);
+        if (!newPassword) return;
+        if (newPassword.length < 6) { alert("Mật khẩu mới phải có ít nhất 6 ký tự!"); return; }
+
+        try {
+            const res = await fetch(`${API_URL}/api/admin/users/${id}/reset-password`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`
+                },
+                body: JSON.stringify({ newPassword })
+            });
+            const data = await res.json();
+            alert(data.message);
+        } catch(e) { alert("Lỗi khi kết nối hệ thống."); }
     }
 
     window.grantUserAccess = async function() {
@@ -426,23 +426,29 @@
         try {
             const res = await fetch(`${API_URL}/api/admin/users`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`
+                },
                 body: JSON.stringify({ email })
             });
             const data = await res.json();
             if(!res.ok) { alert(data.message); return; }
             emailInput.value = ''; loadUsersAdmin();
-            alert(`✅ Đã tạo khách hàng thành công!\n\nMã số: ${data.userCode}\nEmail: ${data.email}\nMật khẩu: ${data.password}`);
+            alert(`✅ Đã tạo khách hàng thành công!\n\nMã số: ${data.userCode}\nEmail: ${data.email}\nMật khẩu: ${data.password}\n\n⚠️ Lưu ý: Hãy copy mật khẩu này gửi cho khách hàng, hệ thống sẽ mã hóa bảo mật mật khẩu này và không hiển thị lại lần nữa.`);
         } catch (e) { alert("Lỗi kết nối."); }
     };
 
     window.deleteUserAdmin = async function(id, email) {
         if(confirm(`⚠️ CẢNH BÁO: Xóa tài khoản ${email}?\nTài khoản và tất cả mã giảm giá đã cấp của người này sẽ bị xóa vĩnh viễn.`)) {
-            await fetch(`${API_URL}/api/admin/users/${id}`, { method: 'DELETE' }); loadUsersAdmin(); loadAllVouchersAdmin();
+            await fetch(`${API_URL}/api/admin/users/${id}`, { 
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            }); 
+            loadUsersAdmin(); loadAllVouchersAdmin();
         }
     };
 
-    // MANAGEMENT VOUCHER ADMIN
     window.addVoucherAdmin = async function() {
         const code = document.getElementById('admin-v-code').value.toUpperCase().trim();
         const category = document.getElementById('admin-v-category').value;
@@ -460,7 +466,10 @@
         try {
             const res = await fetch(`${API_URL}/api/admin/vouchers`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`
+                },
                 body: JSON.stringify({ code, category, expiry, userId, userEmail })
             });
             const data = await res.json();
@@ -479,7 +488,9 @@
         listEl.innerHTML = '<p class="text-center text-xs text-gray-400">Đang tải dữ liệu...</p>';
 
         try {
-            const res = await fetch(`${API_URL}/api/admin/vouchers?keyword=${encodeURIComponent(keyword)}`);
+            const res = await fetch(`${API_URL}/api/admin/vouchers?keyword=${encodeURIComponent(keyword)}`, {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            });
             const allSysVouchers = await res.json();
             listEl.innerHTML = '';
 
@@ -487,7 +498,7 @@
 
             allSysVouchers.forEach(v => {
                 const div = document.createElement('div');
-                div.className = "p-3 bg-gray-50 border rounded-xl flex flex-col gap-1 text-xs";
+                div.className = "p-3 bg-white border rounded-xl flex flex-col gap-1 text-xs shadow-sm";
                 div.innerHTML = `
                     <div class="flex justify-between items-center">
                         <p class="font-bold font-mono text-blue-700 text-sm">${v.code}</p>
@@ -519,7 +530,10 @@
         try {
             const res = await fetch(`${API_URL}/api/admin/vouchers/${voucherId}/assign`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`
+                },
                 body: JSON.stringify({ userId, userEmail: selectedUser.email })
             });
             if(res.ok) { alert("Cấp mã cho khách thành công!"); loadAllVouchersAdmin(); }
@@ -528,14 +542,22 @@
 
     window.deleteVoucherAdmin = async function(id) {
         if(confirm("Xóa mã này khỏi hệ thống?")) {
-            await fetch(`${API_URL}/api/admin/vouchers/${id}`, { method: 'DELETE' }); loadAllVouchersAdmin();
+            await fetch(`${API_URL}/api/admin/vouchers/${id}`, { 
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            }); 
+            loadAllVouchersAdmin();
         }
     };
 
-    // KHỞI ĐỘNG KIỂM TRA PHIÊN
+    // KHỞI ĐỘNG KIỂM TRA PHIÊN ĐĂNG NHẬP (Khôi phục Token JWT)
+    const savedToken = sessionStorage.getItem('voucher_token');
     const savedUser = sessionStorage.getItem('voucher_user');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser); setupAppHeader(); showScreen('screen-list');
+    if (savedToken && savedUser) {
+        userToken = savedToken;
+        currentUser = JSON.parse(savedUser); 
+        setupAppHeader(); 
+        showScreen('screen-list');
     } else {
         showScreen('screen-login');
     }
