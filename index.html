@@ -123,7 +123,16 @@
                 <h3 class="font-bold text-slate-800 text-sm">➕ Nhập mã giảm giá</h3>
                 
                 <div class="flex relative">
-                    <input type="text" id="admin-v-code" placeholder="Nhập mã chữ..." class="w-full bg-slate-50 border-0 p-3 rounded-xl text-sm uppercase font-mono outline-none">
+                    <h3 class="font-bold text-slate-800 text-sm">➕ Nhập mã giảm giá</h3>
+                
+                <div class="flex relative items-center">
+                    <input type="text" id="admin-v-code" placeholder="Nhập mã chữ..." class="w-full bg-slate-50 border-0 p-3 pr-12 rounded-xl text-sm uppercase font-mono outline-none">
+                    
+                    <button type="button" onclick="document.getElementById('upload-qr').click()" class="absolute right-3 text-slate-400 hover:text-blue-600 text-xl transition active:scale-90" title="Quét mã">📷</button>
+                </div>
+                
+                <input type="file" id="upload-qr" accept="image/*" class="hidden" onchange="scanImage(event)">
+                <p id="scan-status" class="text-xs font-bold mt-1 hidden"></p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
@@ -177,7 +186,35 @@
     let currentTab = 'active'; 
     let currentAdminPage = 1;
     let totalAdminPages = 1;
+    // --- TÍNH NĂNG QUÉT MÃ QR / BARCODE ---
+    window.scanImage = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const statusEl = document.getElementById('scan-status');
+        statusEl.className = "text-xs text-blue-600 font-bold mt-1";
+        statusEl.innerText = "⏳ Đang phân tích ảnh...";
+        statusEl.classList.remove('hidden');
 
+        // Sử dụng thư viện html5-qrcode đã nhúng sẵn ở thẻ <head>
+        const html5QrCode = new Html5Qrcode("qr-reader-dummy");
+        html5QrCode.scanFile(file, true).then(decodedText => {
+            // Điền mã quét được vào ô input
+            document.getElementById('admin-v-code').value = decodedText.toUpperCase();
+            
+            statusEl.className = "text-xs text-green-600 font-bold mt-1";
+            statusEl.innerText = "✅ Quét thành công!";
+            
+            // Ẩn thông báo sau 3 giây
+            setTimeout(() => statusEl.classList.add('hidden'), 3000);
+        }).catch(err => {
+            statusEl.className = "text-xs text-red-500 font-bold mt-1";
+            statusEl.innerText = "❌ Không tìm thấy mã hợp lệ trong ảnh.";
+        });
+        
+        // Reset lại input file để có thể quét lại cùng 1 ảnh nếu cần
+        event.target.value = '';
+    };
     // BẢO MẬT: CHỐNG CHỤP MÀN HÌNH
     document.addEventListener("visibilitychange", function() {
         const blur = document.getElementById('security-blur');
