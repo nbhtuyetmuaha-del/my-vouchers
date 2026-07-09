@@ -8,6 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Thư viện đọc Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> 
     <style>
         body { background-color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
         .mobile-container {
@@ -28,12 +30,14 @@
 <div id="qr-reader-dummy" style="display: none;"></div>
 
 <div class="mobile-container flex flex-col">
+    <!-- HEADER -->
     <div id="header-bar" class="hidden bg-gray-900 text-white p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
         <h1 class="text-xl font-bold" id="header-title">Ví Voucher</h1>
         <div class="flex items-center gap-3">
             <button id="btn-back" class="hidden text-sm bg-gray-700 px-3 py-1 rounded">Quay lại</button>
             <button id="btn-user-menu" class="text-2xl focus:outline-none" onclick="toggleUserMenu()">👤</button>
         </div>
+        <!-- Dropdown Menu -->
         <div id="user-menu-dropdown" class="hidden absolute top-14 right-4 bg-white text-gray-800 rounded-lg shadow-xl border w-56 z-20 overflow-hidden">
             <div class="p-4 border-b bg-gray-50">
                 <p class="text-xs text-gray-500 mb-1" id="menu-user-role">Đang đăng nhập:</p>
@@ -46,6 +50,7 @@
         </div>
     </div>
 
+    <!-- MÀN HÌNH 0: ĐĂNG NHẬP -->
     <div id="screen-login" class="flex-1 flex flex-col items-center justify-center p-6 bg-gray-900 text-white">
         <div class="bg-white p-6 rounded-2xl shadow-xl w-full text-gray-900 text-center relative overflow-hidden">
             <h2 class="text-2xl font-bold mb-2">Hệ Thống Voucher</h2>
@@ -57,6 +62,7 @@
         </div>
     </div>
 
+    <!-- MÀN HÌNH 1: DANH SÁCH VOUCHER CỦA KHÁCH -->
     <div id="screen-list" class="hidden flex-1 p-0 overflow-y-auto pb-24 bg-gray-50">
         <div class="flex bg-white border-b sticky top-0 z-0">
             <button id="tab-active" class="flex-1 py-3 text-center tab-active transition" onclick="switchTab('active')">Chưa dùng <span id="count-active" class="ml-1 text-xs bg-blue-100 text-blue-600 py-0.5 px-2 rounded-full">0</span></button>
@@ -73,6 +79,7 @@
         </div>
     </div>
 
+    <!-- MÀN HÌNH CHI TIẾT SỬ DỤNG -->
     <div id="screen-detail" class="hidden flex-1 p-0 bg-white flex flex-col h-full">
         <div class="bg-gray-50 p-6 flex flex-col items-center border-b relative shrink-0">
             <span id="detail-category" class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2"></span>
@@ -104,12 +111,15 @@
         </div>
     </div>
 
+    <!-- MÀN HÌNH 4: ADMIN DASHBOARD BẢO MẬT & PHÂN TRANG -->
     <div id="screen-admin" class="hidden flex-1 p-4 bg-gray-100 overflow-y-auto space-y-6 pb-24">
+        <!-- TAB MENU ADMIN -->
         <div class="flex gap-2 p-1 bg-gray-200 rounded-lg text-sm font-medium">
             <button id="admin-subtab-users" class="flex-1 py-2 text-center bg-white rounded shadow-sm" onclick="switchAdminSubTab('users')">👥 Thành viên</button>
             <button id="admin-subtab-vouchers" class="flex-1 py-2 text-center text-gray-600" onclick="switchAdminSubTab('vouchers')">🎟️ Kho Voucher</button>
         </div>
 
+        <!-- MỤC QUẢN LÝ THÀNH VIÊN -->
         <div id="admin-section-users" class="space-y-4">
             <div class="bg-white p-4 rounded-xl shadow-sm border">
                 <h3 class="font-bold text-sm text-gray-700 mb-3">➕ Thêm Tài Khoản Khách Mới</h3>
@@ -124,9 +134,13 @@
             </div>
         </div>
 
+        <!-- MỤC QUẢN LÝ VOUCHER -->
         <div id="admin-section-vouchers" class="hidden space-y-4">
+            <!-- Khu vực thêm mã -->
             <div class="bg-white p-4 rounded-xl shadow-sm border space-y-3">
                 <h3 class="font-bold text-sm text-gray-700">➕ Tạo Mã Giảm Giá Mới</h3>
+                
+                <!-- Nhập lẻ -->
                 <div class="flex relative">
                     <input type="text" id="admin-v-code" placeholder="Nhập mã hoặc quét ảnh..." class="w-full border p-2 rounded-lg text-sm uppercase pr-10 outline-none">
                     <button type="button" onclick="document.getElementById('upload-qr').click()" class="absolute right-0 top-0 h-full px-3 text-gray-500">📷</button>
@@ -149,10 +163,20 @@
                         <option value="">Lưu trong kho chung (Chưa cấp)</option>
                     </select>
                 </div>
+                <button onclick="addVoucherAdmin()" class="w-full bg-gray-900 text-white p-2.5 rounded-lg text-sm font-bold">Lưu Nhập Lẻ</button>
 
-                <button onclick="addVoucherAdmin()" class="w-full bg-gray-900 text-white p-2.5 rounded-lg text-sm font-bold">Lưu Vào Hệ Thống</button>
+                <!-- Tính năng Import Excel -->
+                <div class="border-t pt-3 mt-3">
+                    <label class="block text-[11px] text-gray-500 mb-1.5 font-bold">📂 NHẬP HÀNG LOẠT TỪ EXCEL</label>
+                    <p class="text-[10px] text-gray-400 mb-2">Cấu trúc: Cột A (Mã) | Cột B (Loại) | Cột C (HSD)</p>
+                    <div class="flex gap-2">
+                        <input type="file" id="upload-excel" accept=".xlsx, .xls, .csv" class="flex-1 border p-1.5 rounded-lg text-xs outline-none bg-gray-50 text-gray-600">
+                        <button onclick="importExcelAdmin()" class="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap shadow-sm active:bg-green-700">Tải Lên</button>
+                    </div>
+                </div>
             </div>
 
+            <!-- Kho mã -->
             <div class="bg-white p-4 rounded-xl shadow-sm border">
                 <h3 class="font-bold text-sm text-gray-700 mb-3">🎟️ Kho mã toàn hệ thống</h3>
                 <div class="flex gap-2 mb-3">
@@ -162,6 +186,7 @@
                 
                 <div id="admin-voucher-list" class="space-y-2"></div>
 
+                <!-- Phân trang UI -->
                 <div class="flex justify-between items-center border-t pt-3 mt-3 text-xs text-gray-600 font-medium">
                     <button id="btn-prev-page" onclick="changeAdminPage(-1)" class="bg-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-300 disabled:opacity-40">◀ Trang trước</button>
                     <span id="txt-page-info">Trang 1 / 1</span>
@@ -182,7 +207,6 @@
     let userToken = null; 
     let currentTab = 'active'; 
 
-    // Các biến kiểm soát phân trang Admin
     let currentAdminPage = 1;
     let totalAdminPages = 1;
 
@@ -223,7 +247,7 @@
             else if (screenId === 'screen-admin') {
                 document.getElementById('header-title').innerText = 'Admin Dashboard';
                 loadUsersAdmin();
-                currentAdminPage = 1; // Reset về trang 1 khi mở tab
+                currentAdminPage = 1; 
                 loadAllVouchersAdmin();
             }
         }
@@ -489,19 +513,72 @@
             
             document.getElementById('admin-v-code').value = '';
             document.getElementById('admin-v-expiry').value = '';
-            currentAdminPage = 1; // Reset về trang 1 để xem mã vừa tạo
+            currentAdminPage = 1; 
             loadAllVouchersAdmin();
             alert("✅ Đã lưu mã giảm giá thành công!");
         } catch (e) { alert("Lỗi API."); }
     };
 
-    // Hàm trigger nút Tìm Kiếm
+    // TÍNH NĂNG NHẬP EXCEL HÀNG LOẠT TRÊN TRÌNH DUYỆT
+    window.importExcelAdmin = async function() {
+        const fileInput = document.getElementById('upload-excel');
+        const file = fileInput.files[0];
+        if (!file) { alert("Vui lòng chọn file Excel!"); return; }
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                
+                // Đọc dữ liệu ra JSON dạng mảng (raw: false giúp đọc đúng định dạng ngày tháng của Excel)
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false }); 
+                
+                let vouchersToAdd = [];
+                // Bỏ qua dòng 0 (Tiêu đề cột). Quét từ dòng 1
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row.length >= 3 && row[0]) {
+                        vouchersToAdd.push({
+                            code: String(row[0]),
+                            category: String(row[1]),
+                            expiry: String(row[2])
+                        });
+                    }
+                }
+
+                if(vouchersToAdd.length === 0) { alert("Không tìm thấy dữ liệu hợp lệ trong file!"); return; }
+
+                alert(`Đang xử lý đẩy ${vouchersToAdd.length} mã lên máy chủ, vui lòng chờ...`);
+                
+                const res = await fetch(`${API_URL}/api/admin/vouchers/bulk`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userToken}`
+                    },
+                    body: JSON.stringify({ vouchers: vouchersToAdd })
+                });
+                const resData = await res.json();
+                alert(resData.message);
+                
+                fileInput.value = '';
+                currentAdminPage = 1;
+                loadAllVouchersAdmin();
+
+            } catch (error) {
+                alert("Lỗi đọc file Excel. Vui lòng kiểm tra lại định dạng file.");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
     window.searchAdminVouchers = function() {
         currentAdminPage = 1;
         loadAllVouchersAdmin();
     }
 
-    // Hàm thay đổi số trang khi bấm nút
     window.changeAdminPage = function(direction) {
         let targetPage = currentAdminPage + direction;
         if (targetPage < 1 || targetPage > totalAdminPages) return;
@@ -509,14 +586,12 @@
         loadAllVouchersAdmin();
     }
 
-    // ĐỌC DỮ LIỆU KHO MÃ CÓ PHÂN TRANG GỬI TỪ BACKEND
     window.loadAllVouchersAdmin = async function() {
         const keyword = document.getElementById('admin-search').value;
         const listEl = document.getElementById('admin-voucher-list');
         listEl.innerHTML = '<p class="text-center text-xs text-gray-400">Đang tải dữ liệu...</p>';
 
         try {
-            // Gửi kèm tham số page và limit lên backend
             const res = await fetch(`${API_URL}/api/admin/vouchers?keyword=${encodeURIComponent(keyword)}&page=${currentAdminPage}&limit=10`, {
                 headers: { 'Authorization': `Bearer ${userToken}` }
             });
@@ -529,7 +604,6 @@
                 return; 
             }
 
-            // Đồng bộ dữ liệu phân trang trả về từ máy chủ
             totalAdminPages = data.totalPages;
             setupPaginationControls(data.total, data.currentPage, data.totalPages);
 
@@ -559,10 +633,8 @@
         } catch (e) { listEl.innerHTML = '<p class="text-center text-red-500 text-xs">Lỗi hệ thống.</p>'; }
     };
 
-    // Hàm cập nhật trạng thái các nút phân trang
     function setupPaginationControls(totalItems, currentPage, totalPages) {
         document.getElementById('txt-page-info').innerText = `Trang ${currentPage} / ${totalPages} (Tổng: ${totalItems} mã)`;
-        
         document.getElementById('btn-prev-page').disabled = (currentPage <= 1);
         document.getElementById('btn-next-page').disabled = (currentPage >= totalPages);
     }
