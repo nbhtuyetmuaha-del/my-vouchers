@@ -8,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
     <style>
         body { background-color: #f3f4f6; }
         .mobile-container {
@@ -18,6 +17,8 @@
             position: relative; overflow-x: hidden;
         }
         ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: bold; }
+        .tab-inactive { color: #6b7280; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -37,7 +38,8 @@
                 <p class="text-xs text-gray-500 mb-1">Đang đăng nhập với:</p>
                 <p class="text-sm font-bold truncate" id="menu-user-email">user@email.com</p>
             </div>
-            <div class="p-2">
+            <div class="p-2 flex flex-col gap-1">
+                <button id="btn-admin-panel" class="hidden w-full text-left px-4 py-2 text-blue-600 font-semibold hover:bg-blue-50 rounded transition" onclick="showScreen('screen-admin')">⚙️ Admin Dashboard</button>
                 <button id="btn-logout" class="w-full text-left px-4 py-2 text-red-600 font-semibold hover:bg-red-50 rounded transition">🚪 Đăng xuất ngay</button>
             </div>
         </div>
@@ -45,10 +47,10 @@
 
     <div id="screen-login" class="flex-1 flex flex-col items-center justify-center p-6 bg-gray-900 text-white">
         <div class="bg-white p-6 rounded-2xl shadow-xl w-full text-gray-900 text-center relative overflow-hidden">
-            <h2 id="login-title" class="text-2xl font-bold mb-2">Đăng Nhập Hệ Thống</h2>
-            <p id="login-desc" class="text-sm text-gray-500 mb-6">Hệ thống nội bộ. Vui lòng nhập tài khoản được cấp quyền.</p>
+            <h2 id="login-title" class="text-2xl font-bold mb-2">Đăng Nhập</h2>
+            <p id="login-desc" class="text-sm text-gray-500 mb-6">Hệ thống quản lý nội bộ.</p>
             
-            <input type="email" id="input-email" placeholder="Email Admin" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-4 text-center">
+            <input type="email" id="input-email" placeholder="Email" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-4 text-center">
             <input type="password" id="input-pass" placeholder="Mật khẩu" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none p-2 mb-6 text-center">
             
             <button onclick="handleLogin()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Đăng Nhập</button>
@@ -56,16 +58,22 @@
         </div>
     </div>
 
-    <div id="screen-list" class="hidden flex-1 p-4 overflow-y-auto pb-24">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="font-semibold text-gray-700">Mã của bạn</h2>
-            <select id="filter-category" class="text-sm border rounded p-1" onchange="renderVouchers()">
-                <option value="all">Tất cả</option>
+    <div id="screen-list" class="hidden flex-1 p-0 overflow-y-auto pb-24 bg-gray-50">
+        <div class="flex bg-white border-b sticky top-0 z-0">
+            <button id="tab-active" class="flex-1 py-3 text-center tab-active transition" onclick="switchTab('active')">Chưa dùng <span id="count-active" class="ml-1 text-xs bg-blue-100 text-blue-600 py-0.5 px-2 rounded-full">0</span></button>
+            <button id="tab-used" class="flex-1 py-3 text-center tab-inactive transition" onclick="switchTab('used')">Đã dùng <span id="count-used" class="ml-1 text-xs bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full">0</span></button>
+        </div>
+
+        <div class="p-4">
+            <select id="filter-category" class="w-full text-sm border rounded p-2 mb-4 bg-white" onchange="renderVouchers()">
+                <option value="all">Tất cả thương hiệu</option>
                 <option value="Katinat">Katinat</option>
+                <option value="Shopee">Shopee</option>
                 <option value="Khác">Khác</option>
             </select>
+            <div id="voucher-list" class="space-y-3"></div>
         </div>
-        <div id="voucher-list" class="space-y-3"></div>
+        
         <button onclick="showScreen('screen-add')" class="fixed bottom-6 right-6 md:right-[calc(50%-210px)] bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg text-3xl flex items-center justify-center hover:bg-blue-700 transition z-10">+</button>
     </div>
 
@@ -75,14 +83,11 @@
                 <label class="block text-sm text-gray-600 mb-1">Mã Voucher</label>
                 <div class="flex relative">
                     <input type="text" id="input-code" placeholder="VD: KATINAT123" class="flex-1 border rounded p-2 w-full uppercase pr-12">
-                    <button type="button" onclick="document.getElementById('upload-qr').click()" class="absolute right-0 top-0 h-full px-3 text-gray-600 bg-gray-200 hover:bg-gray-300 border border-l-0 rounded-r transition" title="Tải ảnh lên hoặc chụp mã QR">
-                        📷
-                    </button>
+                    <button type="button" onclick="document.getElementById('upload-qr').click()" class="absolute right-0 top-0 h-full px-3 text-gray-600 bg-gray-200 hover:bg-gray-300 border border-l-0 rounded-r transition">📷</button>
                 </div>
-                <input type="file" id="upload-qr" accept="image/*" capture="environment" class="hidden" onchange="scanImage(event)">
+                <input type="file" id="upload-qr" accept="image/*" class="hidden" onchange="scanImage(event)">
                 <p id="scan-status" class="text-xs mt-1 hidden"></p>
             </div>
-            
             <div>
                 <label class="block text-sm text-gray-600 mb-1">Phân loại</label>
                 <select id="input-category" class="w-full border rounded p-2">
@@ -109,14 +114,19 @@
             <p id="detail-expiry" class="text-sm text-gray-500 mt-2 font-medium"></p>
             <button id="btn-mark-used" class="mt-6 bg-red-100 text-red-600 border border-red-300 px-4 py-2 rounded font-bold w-full active:bg-red-200">Đánh dấu đã sử dụng</button>
         </div>
-        <div id="katinat-terms" class="hidden p-4 text-sm text-gray-700 leading-relaxed overflow-y-auto">
-            <h3 class="font-bold">Cách sử dụng</h3>
-            <p class="mb-2">Xuất trình cho nhân viên thu ngân trước khi thanh toán.</p>
-            <h3 class="font-bold">Điều kiện áp dụng</h3>
-            <ul class="list-disc pl-5 space-y-1">
-                <li>Chỉ áp dụng tại hệ thống KATINAT.</li>
-                <li>Không áp dụng Lễ, Tết. Mỗi hóa đơn 1 voucher.</li>
-            </ul>
+    </div>
+
+    <div id="screen-admin" class="hidden flex-1 p-4 bg-gray-100 overflow-y-auto">
+        <h2 class="font-bold text-xl mb-4 text-gray-800">Quản Lý Toàn Bộ Voucher</h2>
+        <div class="bg-blue-100 text-blue-800 p-3 rounded mb-4 text-sm">
+            <b>Lưu ý:</b> Tính năng Thêm/Sửa/Xóa User vui lòng thực hiện trên <a href="https://console.firebase.google.com/" target="_blank" class="underline font-bold">Firebase Console</a>.
+        </div>
+        <div class="flex gap-2 mb-4">
+            <input type="text" id="admin-search" placeholder="Nhập mã cần tìm..." class="flex-1 border p-2 rounded text-sm">
+            <button onclick="loadAllVouchersAdmin()" class="bg-gray-800 text-white px-3 py-2 rounded text-sm">Tìm kiếm</button>
+        </div>
+        <div id="admin-voucher-list" class="space-y-2 text-sm">
+            <p class="text-center text-gray-500 mt-4">Bấm tìm kiếm để tải dữ liệu...</p>
         </div>
     </div>
 </div>
@@ -124,18 +134,21 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, collectionGroup, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 🔴 ĐIỀN FIREBASE CONFIG CỦA BẠN VÀO ĐÂY 🔴
-const firebaseConfig = {
-  apiKey: "AIzaSyD7Eup9NymCmiSL8156zBOwoH6Q8ZVOGq0",
-  authDomain: "vi-voucher-app.firebaseapp.com",
-  projectId: "vi-voucher-app",
-  storageBucket: "vi-voucher-app.firebasestorage.app",
-  messagingSenderId: "897386519118",
-  appId: "1:897386519118:web:84110f2d328e573e41811f",
-  measurementId: "G-3NYRHQFCS8"
-};
+    // 🔴 1. EMAIL ADMIN ĐÃ ĐƯỢC TÍCH HỢP 🔴
+    const ADMIN_EMAIL = "admin@admin.com";
+
+    // 🔴 2. FIREBASE CONFIG ĐÃ ĐƯỢC TÍCH HỢP 🔴
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7Eup9NymCmiSL8156zBOwoH6Q8ZVOGq0",
+      authDomain: "vi-voucher-app.firebaseapp.com",
+      projectId: "vi-voucher-app",
+      storageBucket: "vi-voucher-app.firebasestorage.app",
+      messagingSenderId: "897386519118",
+      appId: "1:897386519118:web:84110f2d328e573e41811f",
+      measurementId: "G-3NYRHQFCS8"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -144,136 +157,50 @@ const firebaseConfig = {
     let vouchers = [];
     let currentVoucherId = null;
     let currentUser = null;
-    let idleTimer = null;
-    const screens = ['screen-login', 'screen-list', 'screen-add', 'screen-detail'];
+    let currentTab = 'active'; 
+    const screens = ['screen-login', 'screen-list', 'screen-add', 'screen-detail', 'screen-admin'];
 
-    // --- TÍNH NĂNG QUÉT MÃ QR/MÃ VẠCH TỪ ẢNH ---
+    // QUÉT MÃ TỪ ẢNH
     window.scanImage = function(event) {
         const file = event.target.files[0];
         if (!file) return;
-
         const statusEl = document.getElementById('scan-status');
         statusEl.className = "text-xs mt-1 text-blue-600 font-medium";
         statusEl.innerText = "⏳ Đang phân tích ảnh...";
         statusEl.classList.remove('hidden');
 
-        // Khởi tạo engine đọc mã QR/BarCode
         const html5QrCode = new Html5Qrcode("qr-reader-dummy");
-
         html5QrCode.scanFile(file, true)
         .then(decodedText => {
             document.getElementById('input-code').value = decodedText.toUpperCase();
             statusEl.className = "text-xs mt-1 text-green-600 font-bold";
             statusEl.innerText = "✅ Quét thành công!";
-            
-            // Ẩn thông báo sau 3 giây
             setTimeout(() => statusEl.classList.add('hidden'), 3000);
-        })
-        .catch(err => {
+        }).catch(err => {
             statusEl.className = "text-xs mt-1 text-red-500 font-medium";
-            statusEl.innerText = "❌ Không tìm thấy mã hợp lệ trong ảnh.";
+            statusEl.innerText = "❌ Không tìm thấy mã hợp lệ.";
         });
-        
-        // Reset input file để có thể chọn lại ảnh cũ nếu cần
         event.target.value = ''; 
     };
 
-    // TỰ ĐỘNG ĐĂNG XUẤT SAU 6 GIỜ
-    const IDLE_TIMEOUT_MS = 6 * 60 * 60 * 1000;
-    function resetIdleTimer() {
-        if (!currentUser) return;
-        clearTimeout(idleTimer);
-        idleTimer = setTimeout(() => {
-            alert("Phiên đăng nhập đã hết hạn (6 giờ không hoạt động).");
-            signOut(auth);
-        }, IDLE_TIMEOUT_MS);
-    }
-    ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => 
-        document.addEventListener(evt, resetIdleTimer, true)
-    );
-
-    // MENU USER
-    window.toggleUserMenu = function() {
-        document.getElementById('user-menu-dropdown').classList.toggle('hidden');
-    };
+    // UI CONTROL
+    window.toggleUserMenu = function() { document.getElementById('user-menu-dropdown').classList.toggle('hidden'); };
     document.addEventListener('click', (event) => {
         const menu = document.getElementById('user-menu-dropdown');
         const btn = document.getElementById('btn-user-menu');
-        if (menu && btn && !btn.contains(event.target) && !menu.contains(event.target)) {
-            menu.classList.add('hidden');
-        }
+        if (menu && btn && !btn.contains(event.target) && !menu.contains(event.target)) menu.classList.add('hidden');
     });
+
     document.getElementById('btn-logout').onclick = () => {
         document.getElementById('user-menu-dropdown').classList.add('hidden');
         signOut(auth);
     };
 
-    // XỬ LÝ ĐĂNG NHẬP
-    window.handleLogin = async function() {
-        const email = document.getElementById('input-email').value;
-        const pass = document.getElementById('input-pass').value;
-        const errorEl = document.getElementById('login-error');
-        
-        if (!email || !pass) {
-            errorEl.innerText = "Vui lòng điền đầy đủ thông tin.";
-            errorEl.classList.remove('hidden'); return;
-        }
-
-        try {
-            await signInWithEmailAndPassword(auth, email, pass);
-        } catch (error) {
-            errorEl.innerText = "Tài khoản hoặc Mật khẩu không chính xác.";
-            errorEl.classList.remove('hidden');
-        }
-    };
-
-    // Theo dõi trạng thái
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUser = user;
-            document.getElementById('header-bar').classList.remove('hidden');
-            document.getElementById('menu-user-email').innerText = user.email;
-            resetIdleTimer();
-            loadDataFromFirebase();
-            showScreen('screen-list');
-        } else {
-            currentUser = null;
-            clearTimeout(idleTimer);
-            document.getElementById('header-bar').classList.add('hidden');
-            document.getElementById('input-pass').value = '';
-            showScreen('screen-login');
-        }
-    });
-
-    // FIRESTORE DATABASE
-    async function loadDataFromFirebase() {
-        if (!currentUser) return;
-        vouchers = []; 
-        const querySnapshot = await getDocs(collection(db, `users/${currentUser.uid}/vouchers`));
-        querySnapshot.forEach((doc) => {
-            vouchers.push({ id: doc.id, ...doc.data() });
-        });
-        renderVouchers();
-    }
-
-    window.addVoucher = async function() {
-        const code = document.getElementById('input-code').value.toUpperCase();
-        const category = document.getElementById('input-category').value;
-        const expiry = document.getElementById('input-expiry').value;
-        if (!code || !expiry) { alert("Vui lòng nhập đủ thông tin!"); return; }
-
-        const newVoucher = { code, category, expiry, status: 'active', createdAt: Date.now() };
-        const docRef = await addDoc(collection(db, `users/${currentUser.uid}/vouchers`), newVoucher);
-        vouchers.push({ id: docRef.id, ...newVoucher });
-        document.getElementById('input-code').value = '';
-        document.getElementById('input-expiry').value = '';
-        showScreen('screen-list');
-    };
-
-    // UI CONTROL
     window.showScreen = function(screenId) {
+        document.getElementById('user-menu-dropdown').classList.add('hidden');
         screens.forEach(id => document.getElementById(id).classList.add('hidden'));
         document.getElementById(screenId).classList.remove('hidden');
+        
         const btnBack = document.getElementById('btn-back');
         if (screenId === 'screen-list') {
             btnBack.classList.add('hidden');
@@ -282,30 +209,122 @@ const firebaseConfig = {
         } else if (screenId !== 'screen-login') {
             btnBack.classList.remove('hidden');
             btnBack.onclick = () => showScreen('screen-list');
-            document.getElementById('header-title').innerText = screenId === 'screen-add' ? 'Thêm mới' : 'Chi tiết mã';
+            if (screenId === 'screen-add') document.getElementById('header-title').innerText = 'Thêm mới';
+            else if (screenId === 'screen-detail') document.getElementById('header-title').innerText = 'Chi tiết';
+            else if (screenId === 'screen-admin') document.getElementById('header-title').innerText = 'Admin Dashboard';
         }
     };
 
+    // XỬ LÝ TAB (CHƯA DÙNG / ĐÃ DÙNG)
+    window.switchTab = function(tabName) {
+        currentTab = tabName;
+        if(tabName === 'active') {
+            document.getElementById('tab-active').className = "flex-1 py-3 text-center tab-active transition";
+            document.getElementById('tab-used').className = "flex-1 py-3 text-center tab-inactive transition";
+        } else {
+            document.getElementById('tab-active').className = "flex-1 py-3 text-center tab-inactive transition";
+            document.getElementById('tab-used').className = "flex-1 py-3 text-center tab-active transition";
+        }
+        renderVouchers();
+    }
+
+    // ĐĂNG NHẬP (KHÔNG CHO PHÉP ĐĂNG KÝ)
+    window.handleLogin = async function() {
+        const email = document.getElementById('input-email').value;
+        const pass = document.getElementById('input-pass').value;
+        const errorEl = document.getElementById('login-error');
+        if (!email || !pass) { errorEl.innerText = "Điền đầy đủ thông tin."; errorEl.classList.remove('hidden'); return; }
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (error) {
+            errorEl.innerText = "Sai thông tin hoặc tài khoản không tồn tại."; errorEl.classList.remove('hidden');
+        }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('header-bar').classList.remove('hidden');
+            document.getElementById('menu-user-email').innerText = user.email;
+            
+            // Xử lý hiển thị nút Admin Dashboard
+            if(user.email === ADMIN_EMAIL) {
+                document.getElementById('btn-admin-panel').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-admin-panel').classList.add('hidden');
+            }
+
+            loadDataFromFirebase();
+            showScreen('screen-list');
+        } else {
+            currentUser = null;
+            document.getElementById('header-bar').classList.add('hidden');
+            showScreen('screen-login');
+        }
+    });
+
+    // FIRESTORE: LOAD DỮ LIỆU CÁ NHÂN
+    async function loadDataFromFirebase() {
+        if (!currentUser) return;
+        vouchers = []; 
+        const querySnapshot = await getDocs(collection(db, `users/${currentUser.uid}/vouchers`));
+        querySnapshot.forEach((doc) => { vouchers.push({ id: doc.id, ...doc.data() }); });
+        renderVouchers();
+    }
+
+    // FIRESTORE: THÊM MÃ VÀ KIỂM TRA TRÙNG LẶP
+    window.addVoucher = async function() {
+        const code = document.getElementById('input-code').value.toUpperCase().trim();
+        const category = document.getElementById('input-category').value;
+        const expiry = document.getElementById('input-expiry').value;
+        if (!code || !expiry) { alert("Vui lòng nhập đủ thông tin!"); return; }
+
+        // CHECK TRÙNG MÃ
+        const isDuplicate = vouchers.some(v => v.code === code);
+        if (isDuplicate) {
+            alert(`Mã "${code}" đã tồn tại trong ví của bạn! Vui lòng kiểm tra lại.`);
+            return;
+        }
+
+        const newVoucher = { code, category, expiry, status: 'active', createdAt: Date.now() };
+        const docRef = await addDoc(collection(db, `users/${currentUser.uid}/vouchers`), newVoucher);
+        vouchers.push({ id: docRef.id, ...newVoucher });
+        
+        document.getElementById('input-code').value = '';
+        document.getElementById('input-expiry').value = '';
+        currentTab = 'active'; 
+        switchTab('active');
+        showScreen('screen-list');
+    };
+
+    // RENDER DANH SÁCH VÀ ĐẾM SỐ LƯỢNG
     window.renderVouchers = function() {
         const listEl = document.getElementById('voucher-list');
         const filter = document.getElementById('filter-category').value;
         listEl.innerHTML = '';
-        const filtered = filter === 'all' ? vouchers : vouchers.filter(v => v.category === filter);
+
+        const activeCount = vouchers.filter(v => v.status === 'active').length;
+        const usedCount = vouchers.filter(v => v.status === 'used').length;
+        document.getElementById('count-active').innerText = activeCount;
+        document.getElementById('count-used').innerText = usedCount;
+
+        let filtered = vouchers.filter(v => v.status === currentTab);
+        if(filter !== 'all') filtered = filtered.filter(v => v.category === filter);
+
         if (filtered.length === 0) {
-            listEl.innerHTML = '<p class="text-center text-gray-500 mt-10">Không có voucher nào.</p>'; return;
+            listEl.innerHTML = '<p class="text-center text-gray-500 mt-10">Không có voucher nào trong mục này.</p>'; return;
         }
+
         [...filtered].sort((a,b) => b.createdAt - a.createdAt).forEach(v => {
-            const isUsed = v.status === 'used';
             const div = document.createElement('div');
-            div.className = `p-4 rounded-lg shadow-sm border flex justify-between items-center cursor-pointer ${isUsed ? 'bg-gray-100 opacity-60' : 'bg-white active:bg-gray-50'}`;
+            div.className = `p-4 rounded-lg shadow-sm border bg-white flex justify-between items-center cursor-pointer active:bg-gray-50`;
             div.onclick = () => window.showDetail(v);
             div.innerHTML = `
                 <div>
                     <div class="flex items-center gap-2">
                         <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase">${v.category}</span>
-                        ${isUsed ? '<span class="text-xs font-bold text-red-500 border border-red-500 px-1 rounded">ĐÃ DÙNG</span>' : ''}
                     </div>
-                    <p class="font-mono font-bold ${isUsed ? 'text-gray-500 line-through' : 'text-gray-800'} mt-2">${v.code}</p>
+                    <p class="font-mono font-bold text-gray-800 mt-2">${v.code}</p>
                     <p class="text-xs text-gray-500 mt-1">HSD: ${v.expiry}</p>
                 </div>
             `;
@@ -313,6 +332,7 @@ const firebaseConfig = {
         });
     };
 
+    // XEM CHI TIẾT
     window.showDetail = function(voucher) {
         currentVoucherId = voucher.id;
         showScreen('screen-detail');
@@ -321,8 +341,10 @@ const firebaseConfig = {
         document.getElementById('detail-expiry').innerText = 'HSD: ' + voucher.expiry;
         document.getElementById('qrcode').innerHTML = '';
         document.getElementById('barcode').innerHTML = '';
+        
         const btnMarkUsed = document.getElementById('btn-mark-used');
         const stampUsed = document.getElementById('stamp-used');
+        
         if (voucher.status === 'used') {
             stampUsed.classList.remove('hidden'); btnMarkUsed.classList.add('hidden');
             document.getElementById('qrcode').classList.add('opacity-30');
@@ -332,8 +354,9 @@ const firebaseConfig = {
             new QRCode(document.getElementById('qrcode'), { text: voucher.code, width: 150, height: 150 });
             JsBarcode("#barcode", voucher.code, { format: "CODE128", width: 2, height: 60, displayValue: false });
         }
+
         btnMarkUsed.onclick = async function() {
-            if(confirm("Bạn có chắc chắn đã sử dụng mã này?")) {
+            if(confirm("Xác nhận đã sử dụng? (Sẽ chuyển sang mục Đã dùng)")) {
                 const voucherRef = doc(db, `users/${currentUser.uid}/vouchers`, currentVoucherId);
                 await updateDoc(voucherRef, { status: 'used' }); 
                 const index = vouchers.findIndex(v => v.id === currentVoucherId);
@@ -341,8 +364,69 @@ const firebaseConfig = {
                 window.showDetail(vouchers[index]);
             }
         };
-        document.getElementById('katinat-terms').classList.toggle('hidden', voucher.category !== 'Katinat');
     };
+
+    // TÍNH NĂNG ADMIN DASHBOARD
+    window.loadAllVouchersAdmin = async function() {
+        if(currentUser.email !== ADMIN_EMAIL) {
+            alert("Bạn không có quyền truy cập chức năng này."); return;
+        }
+
+        const keyword = document.getElementById('admin-search').value.toUpperCase().trim();
+        const listEl = document.getElementById('admin-voucher-list');
+        listEl.innerHTML = '<p class="text-center">Đang tải dữ liệu toàn hệ thống...</p>';
+
+        try {
+            const vouchersQuery = query(collectionGroup(db, 'vouchers'));
+            const querySnapshot = await getDocs(vouchersQuery);
+            
+            let allSysVouchers = [];
+            querySnapshot.forEach((doc) => {
+                const userId = doc.ref.parent.parent.id;
+                allSysVouchers.push({ id: doc.id, userId: userId, ...doc.data() });
+            });
+
+            if(keyword !== "") {
+                allSysVouchers = allSysVouchers.filter(v => v.code.includes(keyword));
+            }
+
+            listEl.innerHTML = '';
+            if(allSysVouchers.length === 0) {
+                listEl.innerHTML = '<p class="text-center text-red-500">Không tìm thấy mã nào.</p>';
+                return;
+            }
+
+            allSysVouchers.sort((a,b) => b.createdAt - a.createdAt).forEach(v => {
+                const div = document.createElement('div');
+                div.className = "p-3 bg-white border rounded shadow-sm flex justify-between items-center";
+                div.innerHTML = `
+                    <div>
+                        <p class="font-bold font-mono text-blue-700">${v.code} <span class="text-xs text-gray-400">(${v.status})</span></p>
+                        <p class="text-xs text-gray-500">Thuộc ID: ${v.userId.substring(0, 8)}...</p>
+                    </div>
+                    <button onclick="deleteGlobalVoucher('${v.userId}', '${v.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Xóa mã</button>
+                `;
+                listEl.appendChild(div);
+            });
+
+        } catch (error) {
+            console.error(error);
+            listEl.innerHTML = '<p class="text-center text-red-500">Lỗi lấy dữ liệu! (Hãy chắc chắn bạn đã cập nhật Firestore Rules cho Admin).</p>';
+        }
+    };
+
+    window.deleteGlobalVoucher = async function(userId, voucherId) {
+        if(confirm("Bạn có chắc chắn muốn XÓA VĨNH VIỄN mã này khỏi tài khoản của khách?")) {
+            try {
+                await deleteDoc(doc(db, `users/${userId}/vouchers`, voucherId));
+                alert("Đã xóa thành công!");
+                loadAllVouchersAdmin(); 
+            } catch(e) {
+                alert("Lỗi khi xóa: " + e.message);
+            }
+        }
+    };
+
 </script>
 </body>
 </html>
