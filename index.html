@@ -86,8 +86,17 @@
         <div id="user-watermark" class="watermark"></div>
         <div class="p-6 flex flex-col items-center flex-1 justify-center relative">
             <span id="detail-category" class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4"></span>
-            <div id="stamp-used" class="hidden absolute top-10 transform -rotate-12 border-4 border-red-500 text-red-500 font-bold text-3xl p-2 rounded uppercase opacity-80 z-20">Đã Sử Dụng</div>
-            <div id="qrcode" class="p-3 bg-white rounded-3xl shadow-xl border border-slate-100"></div>
+            
+            <div id="stamp-used" class="hidden absolute top-20 transform -rotate-12 border-4 border-red-500 text-red-500 font-bold text-3xl p-2 rounded uppercase opacity-80 z-20">Đã Sử Dụng</div>
+            
+            <div id="qrcode-container" class="p-3 bg-white rounded-3xl shadow-xl border border-slate-100">
+                <div id="qrcode"></div>
+            </div>
+            
+            <div id="barcode-container" class="mt-6 w-full flex justify-center">
+                <svg id="barcode"></svg>
+            </div>
+
             <div class="mt-6 text-center">
                 <p id="detail-code" class="text-3xl font-mono font-bold tracking-widest text-slate-900"></p>
                 <p id="detail-expiry" class="text-sm font-semibold text-slate-500 mt-2"></p>
@@ -111,7 +120,7 @@
                 <h3 class="font-bold text-slate-800 mb-3 text-sm">➕ Cấp tài khoản mới</h3>
                 <div class="flex gap-2">
                     <input type="email" id="admin-new-user-email" placeholder="Email khách hàng..." class="flex-1 bg-slate-50 border-0 p-3 rounded-xl text-sm outline-none">
-                    <button onclick="grantUserAccess()" class="bg-blue-600 text-white px-5 rounded-xl font-bold text-sm active:scale-95 transition">Tạo</button>
+                    <button onclick="grantUserAccess()" class="bg-blue-600 text-white px-5 rounded-xl font-bold text-sm transition">Tạo</button>
                 </div>
             </div>
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
@@ -129,7 +138,7 @@
                 
                 <div class="flex relative items-center">
                     <input type="text" id="admin-v-code" placeholder="Nhập mã chữ..." class="w-full bg-slate-50 border-0 p-3 pr-12 rounded-xl text-sm uppercase font-mono outline-none">
-                    <button type="button" onclick="document.getElementById('upload-qr').click()" class="absolute right-3 text-slate-400 hover:text-blue-600 text-xl transition active:scale-90" title="Quét mã">📷</button>
+                    <button type="button" onclick="document.getElementById('upload-qr').click()" class="absolute right-3 text-slate-400 hover:text-blue-600 text-xl transition" title="Quét mã">📷</button>
                 </div>
                 <input type="file" id="upload-qr" accept="image/*" class="hidden" onchange="scanImage(event)">
                 <p id="scan-status" class="text-xs font-bold mt-1 hidden"></p>
@@ -145,13 +154,13 @@
                     <option value="">Lưu vào kho chung (Chưa cấp)</option>
                 </select>
 
-                <button onclick="addVoucherAdmin()" class="w-full bg-slate-900 text-white p-3 rounded-xl text-sm font-bold active:scale-95 transition">Lưu Mã</button>
+                <button onclick="addVoucherAdmin()" class="w-full bg-slate-900 text-white p-3 rounded-xl text-sm font-bold transition">Lưu Mã</button>
 
                 <div class="border-t pt-4 mt-2">
                     <label class="block text-xs font-bold text-green-600 mb-2">🟢 HOẶC NHẬP TỪ EXCEL HÀNG LOẠT</label>
                     <div class="flex gap-2">
                         <input type="file" id="upload-excel" accept=".xlsx, .xls, .csv" class="flex-1 text-xs">
-                        <button onclick="importExcelAdmin()" class="bg-green-600 text-white px-4 rounded-xl font-bold text-xs active:scale-95">Tải lên</button>
+                        <button onclick="importExcelAdmin()" class="bg-green-600 text-white px-4 rounded-xl font-bold text-xs">Tải lên</button>
                     </div>
                 </div>
             </div>
@@ -244,7 +253,6 @@
         }
     }
 
-    // TÍNH NĂNG CAMERA QUÉT MÃ
     window.scanImage = function(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -302,7 +310,6 @@
         else document.getElementById('btn-admin-panel').classList.add('hidden');
     }
 
-    // --- LOGIC KHÁCH HÀNG (CÓ SẮP XẾP) ---
     async function loadDataFromBackend() {
         if (!currentUser) return;
         try {
@@ -312,7 +319,6 @@
         } catch (e) { console.error(e); }
     }
 
-    // Hàm đọc ngày an toàn (Hỗ trợ YYYY-MM-DD và DD/MM/YYYY)
     function parseDateSafely(dateStr) {
         if (!dateStr) return 0;
         if (dateStr.includes('/')) {
@@ -334,12 +340,9 @@
         let filtered = vouchers.filter(v => v.status === currentTab);
         if(filter !== 'all') filtered = filtered.filter(v => v.category === filter);
 
-        // THỰC HIỆN SẮP XẾP
         if (sortBy === 'expiry') {
-            // Hạn gần nhất xếp lên trên
             filtered.sort((a, b) => parseDateSafely(a.expiry) - parseDateSafely(b.expiry));
         } else {
-            // Mới nhất xếp lên trên
             filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
 
@@ -362,30 +365,60 @@
         });
     };
 
+    // --- LOGIC ĐỔI MỚI TRẢI NGHIỆM MỞ MÃ ---
     window.handleVoucherClick = async function(voucher) {
-        if (voucher.status === 'used') { window.showDetail(voucher); return; }
-        if (confirm("⚠️ BẠN CÓ CHẮC CHẮN MUỐN DÙNG MÃ?\n\nHệ thống sẽ hiện mã QR và khóa mã vĩnh viễn.")) {
+        // Nếu mã đã cũ (đã dùng từ các phiên trước), mở lên và ĐÓNG DẤU LUÔN (isFirstTime = false)
+        if (voucher.status === 'used') { window.showDetail(voucher, false); return; }
+        
+        if (confirm("⚠️ BẠN CÓ CHẮC CHẮN MUỐN DÙNG MÃ?\n\nHệ thống sẽ hiện mã QR + Mã vạch sắc nét cho Thu ngân quét và khóa mã vĩnh viễn.")) {
             try {
                 const res = await fetch(`${API_URL}/api/vouchers/${voucher._id}/use-instantly`, { method: 'PUT', headers: { 'Authorization': `Bearer ${userToken}` }});
                 const updatedVoucher = await res.json();
-                if (res.ok) window.showDetail(updatedVoucher); else alert(updatedVoucher.message);
+                if (res.ok) {
+                    // Lần đầu kích hoạt mã -> Gọi showDetail với isFirstTime = true để HIỂN THỊ RÕ NÉT cho thu ngân quét
+                    window.showDetail(updatedVoucher, true); 
+                } else { alert(updatedVoucher.message); }
             } catch (e) { alert("Lỗi kết nối máy chủ."); }
         }
     };
 
-    window.showDetail = function(voucher) {
+    window.showDetail = function(voucher, isFirstTime = false) {
         showScreen('screen-detail');
         document.getElementById('detail-category').innerText = voucher.category;
         document.getElementById('detail-code').innerText = voucher.code; 
         document.getElementById('detail-expiry').innerText = 'HSD: ' + voucher.expiry;
         document.getElementById('user-watermark').innerText = currentUser.email;
         
-        document.getElementById('qrcode').innerHTML = '';
-        new QRCode(document.getElementById('qrcode'), { text: voucher.code, width: 180, height: 180, colorDark: "#1e293b" });
-        if(voucher.status === 'used') {
-            document.getElementById('stamp-used').classList.remove('hidden'); document.getElementById('qrcode').classList.add('opacity-30');
+        // 1. Vẽ mã QR
+        const qrContainer = document.getElementById('qrcode');
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, { text: voucher.code, width: 180, height: 180, colorDark: "#1e293b" });
+        
+        // 2. Vẽ mã vạch hoàn chỉnh (Dùng CODE128 chuẩn thu ngân)
+        try {
+            JsBarcode("#barcode", voucher.code, {
+                format: "CODE128",
+                width: 2,
+                height: 60,
+                displayValue: false
+            });
+        } catch (err) { console.error("Lỗi tạo mã vạch:", err); }
+
+        // 3. Xử lý đóng dấu và độ mờ 30% dựa trên trạng thái và phiên sử dụng
+        const stampEl = document.getElementById('stamp-used');
+        const qrBlock = document.getElementById('qrcode-container');
+        const barcodeBlock = document.getElementById('barcode-container');
+
+        if (voucher.status === 'used' && !isFirstTime) {
+            // Chỉ đóng dấu chìm và làm mờ khi xem lại mã đã dùng trước đó
+            stampEl.classList.remove('hidden'); 
+            qrBlock.classList.add('opacity-30');
+            barcodeBlock.classList.add('opacity-30');
         } else {
-            document.getElementById('stamp-used').classList.add('hidden'); document.getElementById('qrcode').classList.remove('opacity-30');
+            // Hiển thị RÕ NÉT hoàn toàn cho lần đầu tiên sử dụng (hoặc mã chưa sử dụng)
+            stampEl.classList.add('hidden'); 
+            qrBlock.classList.remove('opacity-30');
+            barcodeBlock.classList.remove('opacity-30');
         }
     };
 
@@ -529,7 +562,6 @@
         if(confirm("Xóa mã này?")) { await fetch(`${API_URL}/api/admin/vouchers/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${userToken}` } }); loadAllVouchersAdmin(); }
     };
 
-    // KHỞI ĐỘNG
     const savedToken = sessionStorage.getItem('voucher_token'); const savedUser = sessionStorage.getItem('voucher_user');
     if (savedToken && savedUser) { userToken = savedToken; currentUser = JSON.parse(savedUser); setupAppHeader(); showScreen(currentUser.role === 'admin' ? 'screen-admin' : 'screen-list'); } 
     else { showScreen('screen-login'); }
